@@ -250,6 +250,13 @@ def build_stats(managers, events, total_events, start_event=1):
                         'gameweeks': [gw['id'] for gw in weeks], 'rows': ranks(rows, lambda r: -r['points'])})
     return by_gw, monthly
 
+def comparison_history(current, chips):
+    public_gw = max((r['event'] for r in current), default=0)
+    before = max((r for r in current if r['event'] < public_gw), key=lambda r: r['event'], default=None)
+    return {'tie_transfers': sum(r['event_transfers'] for r in current if chips.get(r['event']) not in ('wildcard', 'freehit')),
+            'previous_total': before['total_points'] if before else None,
+            'previous_transfers': sum(r['event_transfers'] for r in current if r['event'] < public_gw and chips.get(r['event']) not in ('wildcard', 'freehit'))}
+
 def update_creators(season, latest, cap, total_events):
     roster = json.loads((ROOT / 'content-creators.json').read_text())
     if str(roster['season']) != season:
@@ -264,16 +271,13 @@ def update_creators(season, latest, cap, total_events):
         chips = {c['event']: c['name'] for c in history.get('chips', [])}
         latest_row = next((r for r in current if r['event'] == latest), None)
         public_gw = max((r['event'] for r in current), default=0)
-        before = next((r for r in reversed(current) if r['event'] < public_gw), None)
         managers.append({'id': entry, 'creator': True, 'name': creator['name'], 'team': profile['name'],
                          'total': profile['summary_overall_points'], 'live_rank': profile['summary_overall_rank'],
                          'latest_score': latest_row['points'] - latest_row['event_transfers_cost'] if latest_row else None,
                          'ft': free_transfers(current, chips, cap), 'ft_cap': cap,
                          'ft_gw': public_gw + 1 if public_gw < total_events else None,
                          'chips': [{'gw': gw, 'name': name} for gw, name in sorted(chips.items())],
-                         'tie_transfers': sum(r['event_transfers'] for r in current if chips.get(r['event']) not in ('wildcard', 'freehit')),
-                         'previous_total': before['total_points'] if before else None,
-                         'previous_transfers': sum(r['event_transfers'] for r in current if r['event'] < public_gw and chips.get(r['event']) not in ('wildcard', 'freehit'))})
+                         **comparison_history(current, chips)})
     ranks(managers, lambda m: (-m['total'], m['tie_transfers']))
     previous = [m for m in managers if m['previous_total'] is not None]
     ranks(previous, lambda m: (-m['previous_total'], m['previous_transfers']), 'previous_rank')
@@ -372,6 +376,7 @@ def main():
                          'squad_restored': chips.get(public_gw) == 'freehit',
                          'mvp': mvp, 'mvp_coverage': mvp_coverage,
                          **scoring_awards(rows, details, entry),
+                         **comparison_history(history['current'], chips),
                          'value': latest_history.get('value', 0) / 10 or None, 'history': rows})
     gameweeks, monthly = build_stats(managers, events, len(bootstrap['events']), start)
     creators = None
