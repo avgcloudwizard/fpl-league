@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101714">
+  <meta name="description" content="Our FPL mini-league: standings, weekly bragging rights, season records and simple projections.">
+  <title>Touchline · Our FPL league</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css"><script src="./app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to stats</a>
+  <header class="site-header"><div class="header-inner">
+    <a href="#home" class="brand" aria-label="Touchline home"><span class="brand-mark">t<span>▰</span></span>touchline<span class="brand-dot">.</span></a>
+    <nav aria-label="Main navigation">
+      <a href="#home" data-nav="home">Home</a><a href="#gameweeks" data-nav="gameweeks">Gameweeks</a><a href="#monthly" data-nav="monthly">Monthly</a><a href="#season" data-nav="season">Season</a><a href="#predictions" data-nav="predictions">Predictions</a>
+    </nav><span class="header-label">THE MINI-LEAGUE EDITION</span>
+  </div></header>
+  <main id="content" tabindex="-1"><div class="loading">Fetching the latest league snapshot…</div></main>
+  <footer><span>For the league. For the bragging rights.</span><span id="updated"></span></footer>
+  <dialog id="profile" aria-labelledby="profile-title"><button class="close" aria-label="Close manager profile">✕</button><div id="profile-content"></div></dialog>
+  <noscript><p>This stats site needs JavaScript enabled to display the league tables.</p></noscript>
+</body>
+</html>

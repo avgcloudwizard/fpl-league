@@ -1,0 +1,67 @@
+name: Update FPL and publish site
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ['README.md', 'tests/**']
+
+# Only standard public-repository runners; no paid services or API keys.
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: fpl-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check scoring calculations
+        run: python3 -m unittest discover -s tests -v
+      - name: Refresh public FPL data
+        id: refresh
+        continue-on-error: true
+        run: python3 scripts/update_fpl.py
+      - name: Validate snapshot
+        run: python3 scripts/validate_snapshot.py
+      - name: Save successful snapshot
+        if: steps.refresh.outcome == 'success'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/league.json .fpl-cache.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Refresh public FPL league data'
+            git push origin HEAD:main
+          fi
+      - name: Prepare the static website
+        run: |
+          mkdir -p .site/data
+          cp index.html styles.css app.js favicon.svg .site/
+          cp data/league.json .site/data/
+          touch .site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .site
+          retention-days: 1
+      - name: Publish GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Report retained snapshot
+        if: steps.refresh.outcome != 'success'
+        run: |
+          echo 'FPL refresh failed. The previous successful snapshot remains available.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
