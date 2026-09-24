@@ -3,7 +3,7 @@ from unittest.mock import patch
 import tempfile
 from pathlib import Path
 from scripts.update_fpl import (build_stats, captain_detail, normalize, write_json, main,
-                               free_transfers, squad_detail, manager_mvp, price_watch)
+                               free_transfers, squad_detail, manager_mvp, price_watch, scoring_awards, projection, update_creators)
 
 def manager(entry, history):
     return {'id': entry, 'name': str(entry), 'team': 'Team '+str(entry), 'history': history, 'rank':entry, 'total':999}
@@ -22,7 +22,7 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(ms[0]['wins'],2)
         self.assertEqual(ms[0]['average'],55)
         self.assertEqual(ms[0]['hits'],4)
-        self.assertEqual(ms[0]['projected_total'],2090) # Uses completed total, not provisional 999
+        self.assertEqual(ms[0]['projected_base'],2090) # Uses completed total, not provisional 999
         self.assertEqual(months[1]['rows'][0]['points'],60)
         self.assertIsNone(months[0]['rows'][0]['movement'])
         self.assertEqual(ms[0]['power'],50)
@@ -52,6 +52,54 @@ class ScoringTests(unittest.TestCase):
         self.assertIsNone(next(r for r in gws[1]['rows'] if r['id']==2)['movement'])
         self.assertIsNone(ms[0]['captain_points'])
         self.assertEqual(ms[1]['completed_count'],1)
+    def test_awards_base_points_thresholds_and_final_lineup(self):
+        picks={'picks':[{'element':1,'multiplier':3,'is_captain':True},{'element':2,'multiplier':1},{'element':3,'multiplier':0}]}
+        detail=squad_detail(picks,{1:4,2:12,3:20},{1:'Cap',2:'Haul',3:'Bench'})
+        result=scoring_awards([score(1,24)],{'7:1':detail},7)
+        self.assertEqual(result['captain_failures'],1)
+        self.assertEqual(result['hauls'],1) # TC's 12 counted as base 4; unused bench excluded.
+        self.assertEqual(result['captain_failure_details'][0]['player'],'Cap')
+        detail=squad_detail(picks,{1:12,2:11,3:20},{1:'Cap',2:'Other',3:'Bench'})
+        result=scoring_awards([score(1,47)],{'7:1':detail},7)
+        self.assertEqual((result['captain_failures'],result['hauls']),(0,1))
+        self.assertIsNone(scoring_awards([score(1,48)],{'7:1':detail},7)['hauls'])
+        self.assertIsNone(scoring_awards([score(1,47),score(2,40)],{'7:1':detail},7)['captain_failures'])
+    def test_projection_stability_bounds_and_final_season(self):
+        values=[projection(500,60,28,str(i)) for i in range(20)]
+        self.assertTrue(all(2<=abs(v[2])<=5 for v in values))
+        self.assertTrue(any(v[2]<0 for v in values) and any(v[2]>0 for v in values))
+        self.assertEqual(projection(500,60,28,'same'),projection(500,60,28,'same'))
+        self.assertEqual(projection(2300,60,0,'done'),(2300,2300,0))
+        self.assertEqual(projection(500,None,28,'none'),(None,None,None))
+        self.assertEqual(values[0][0],round(500+60*28*(1+values[0][2]/100)))
+    def test_best_gameweek_rank_is_global_and_lower_is_better(self):
+        a=score(1,50);a['overall_gw_rank']=10000
+        b=score(2,60);b['overall_gw_rank']=10000
+        ms=[manager(1,[a,b])]
+        build_stats(ms,events(),38)
+        self.assertEqual(ms[0]['best_gw_rank'],10000)
+        self.assertEqual(ms[0]['best_gw_rank_gws'],[1,2])
+    def test_creator_ranks_transfers_movement_and_failed_response(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            write_json(root/'content-creators.json',{'season':2026,'checked_at':'2026-09-25','source':'reference',
+                       'managers':[{'id':1,'name':'Creator A'},{'id':2,'name':'Creator B'}]})
+            def public(path):
+                entry=int(path.split('/')[1])
+                if path.endswith('/history/'):
+                    return {'current':[{'event':1,'points':40 if entry==1 else 60,'event_transfers':0,'event_transfers_cost':0,'total_points':40 if entry==1 else 60},
+                                       {'event':2,'points':60 if entry==1 else 40,'event_transfers':1 if entry==1 else 0,'event_transfers_cost':0,'total_points':100}], 'chips':[]}
+                return {'name':'Team '+str(entry),'summary_overall_points':100,'summary_overall_rank':1000+entry}
+            with patch('scripts.update_fpl.ROOT',root),patch('scripts.update_fpl.fetch',side_effect=public):
+                result=update_creators('2026',2,5,38)
+                self.assertEqual([m['id'] for m in result['managers']],[2,1])
+                self.assertEqual(result['managers'][0]['live_rank'],1002)
+                self.assertEqual(result['managers'][0]['ft'],2)
+                self.assertEqual(result['managers'][1]['latest_score'],60)
+                self.assertEqual(result['managers'][1]['movement'],0)
+                with self.assertRaises(ValueError):update_creators('2027',2,5,38)
+            with patch('scripts.update_fpl.ROOT',root),patch('scripts.update_fpl.fetch',side_effect=RuntimeError('unavailable')):
+                with self.assertRaises(RuntimeError):update_creators('2026',2,5,38)
     def test_normalization(self):
         self.assertEqual(normalize(8,[8,8]),50)
         self.assertEqual(normalize(9,[1,9]),100)

@@ -6,7 +6,7 @@
 
 A small, mobile-friendly website for **Rank follows, my brother!**, FPL league **795551**. Friends can open the public website without signing in.
 
-Home, Season, Gameweeks, Monthly, Predictions and Prices include real standings, manager profiles, awards, small charts and transparent statistical projections. No AI is used.
+Home, Season, Gameweeks, Monthly, Predictions, Prices and Content Creators include real standings, manager profiles, awards, small charts and transparent statistical projections. No AI is used.
 
 ## Cost: ₹0
 
@@ -20,7 +20,7 @@ GitHub's documentation: [free public Pages](https://docs.github.com/en/pages/get
 
 GitHub runs **Update FPL and publish site** every six hours, at 00:17, 06:17, 12:17 and 18:17 UTC (05:47, 11:47, 17:47 and 23:47 India time). Scheduled jobs may start later during busy periods.
 
-The Python script fetches public FPL data and writes one consistent snapshot to `data/league.json`. All five pages read that same file. It commits the result and publishes the static site. Your computer does not need to be switched on, and visitors never call FPL directly.
+The Python script fetches public FPL data and writes one consistent snapshot to `data/league.json`. All pages read that same file. It commits the result and publishes the static site. Your computer does not need to be switched on, and visitors never call FPL directly.
 
 Old player picks and scoring contributions are cached in `.fpl-cache.json` to reduce requests. Latest completed GW details refresh each run; older details refresh weekly. Requests are spaced out and failures retry up to three times. If standings or a manager's history fail, the previous complete dataset is kept. Optional player-detail failures retain previous values or show missing data; MVP is shown only when every completed GW is covered. A delay notice appears after 18 hours without a successful refresh.
 
@@ -57,14 +57,17 @@ Caches reset automatically when the season or league changes. Only the current F
 - **Monthly score:** sum of net points for GWs whose deadline falls within the month, using UK time. These are our own monthly tables and may differ from official FPL phase tables' boundary-hit treatment.
 - **Captain:** final captain/vice-captain multiplier applied to that player's FPL GW points, including triple captain. Final FPL picks already reflect substitutions. Missing optional captain data is never invented; partial season captain totals show coverage.
 - **Bench:** FPL's `points_on_bench`, i.e. points left unused after final scoring. Bench Boost is already in the GW total; its bench value may be zero.
-- **Historical positions:** reconstructed among today's league members, using net cumulative league points and fewer transfers as a tie-break, excluding Wildcard/Free Hit transfers. Past membership changes cannot be reconstructed. First GW/month movement is blank because there is no prior position. Biggest seasonal rise means the largest gain between two consecutive completed GWs.
+- **Historical positions:** reconstructed among today's league members, using net cumulative league points and fewer transfers as a tie-break, excluding Wildcard/Free Hit transfers. Past membership changes cannot be reconstructed. First GW/month movement is blank because there is no prior position.
 - **Transfers made so far/hits:** FPL history's event transfer count and point cost. The transfer count excludes Wildcard/Free Hit moves, matching FPL's public total. Squad value is the latest public deadline value, without bank.
 - **FTs:** the free-transfer allowance entering the next GW, reconstructed from public deadline history and capped at five. After the first GW it starts at one. Each normal GW spends the transfers made and adds the next GW's one free transfer, up to five. Wildcard/Free Hit retain the existing allowance rather than adding an extra transfer. Late starters are handled from their first deadline. The asterisk matters: transfers made since the latest deadline remain private, so this is not a claim about their exact remaining private balance. [Official FT/chip FAQ](https://www.premierleague.com/en/news/4661030).
 - **Live rank:** the public `summary_overall_rank` from each manager's entry, showing their overall FPL rank as of our last six-hour snapshot. It is not a minute-by-minute live feed. The league-position column remains separate.
 - **Chips:** the public chip history appears as small BB/TC/WC/FH badges with GW numbers. Colours are blue/yellow/red/green respectively.
-- **Best/worst:** the net score includes its GW number in brackets. Equal best/worst scores list every matching GW. Lowest historical position and displayed average-score metrics are removed; highest position is the final season-table column. Averages remain internal inputs to the unchanged Power Rating and projection formulas.
+- **Best/worst:** the net score includes its GW number in brackets. Equal best/worst scores list every matching GW. Lowest historical position and displayed average-score metrics are removed; highest position is the final season-table column. Averages remain internal inputs to the Power Rating and projection formulas.
 - **MVP:** sum of each player's points actually earned for the manager across completed GWs. Final picks multipliers include captain/triple captain, autosubs and Bench Boost; unused bench points do not count. Transfer hits are a team cost and are not assigned to a player. Tied MVPs are all shown. A player who was later sold can still be MVP. If any GW's player contributions are missing or do not reconcile to the official gross GW score, no MVP is asserted. Miniature portraits use the same free public Premier League image host as the FPL site, with an initials fallback.
-- **Projection:** 65% last-five average + 35% season average gives expected points per future GW. Add that times remaining GWs to the last completed total. This prevents counting an unfinished GW twice. Equal rounded totals share a rank. No fixture model, machine learning or simulation.
+- **Projection:** 65% last-five average + 35% season average gives expected points per future GW. Expected remaining points receive a random positive or negative swing of 2–5% per manager before adding them to the last completed total. The swing is seeded by manager and completed GW, so it stays consistent between visits and changes after the next completed GW. Earned points never receive variance, and no variance remains after GW38. The displayed percentage is a scenario adjustment, not a confidence interval. This prevents counting an unfinished GW twice. Equal rounded totals share a rank. No fixture model, machine learning or simulation.
+- **Best GW rank:** the smallest official overall Gameweek rank (`history.current[].rank`) achieved by any manager, with the GW number. This is separate from overall season rank and mini-league GW rank.
+- **Captaincy failures:** completed GWs where the effective captain scored at most 4 base points, before the captain or Triple Captain multiplier. Final vice-captain fallback is respected; if neither captain plays, the original captain’s zero is a failure. Winner cards also list the failed captain names and counts.
+- **Hauls caught:** one count per scoring player per completed GW with at least 12 base points. A captain still counts once; an unused bench player does not count. Autosubs and Bench Boost follow final FPL multipliers. These awards are withheld if any manager’s scoring details are incomplete.
 - **Power Rating:** 40% latest GW + 30% last-five average + 20% season average + 10% rank movement over the last five completed GWs. Each component is min–max scaled across league members; when all values tie everyone receives 50 for that component. Final rating is rounded to 0–100. This is relative form, not a probability.
 
 The public FPL API is undocumented and can occasionally be unavailable or change. The site preserves the last successful snapshot and displays its timestamp. It is an independent fan project, not affiliated with the Premier League.
@@ -80,6 +83,16 @@ The new Prices page uses **official FPL public data** already included in `boots
 - This is a watchlist, not a guaranteed buy/sell recommendation. Price changes are not certain, and our snapshots can lag the official site.
 
 [Official FPL Price Change Predictor explanation](https://www.premierleague.com/en/news/4680462).
+
+## Content Creators
+
+The Content Creators page tracks the 89 creators in [your FPLGameweek list](https://www.fplgameweek.com/#/26/team/61950/league/special_10002), verified on 25 September 2026. The comparison viewer team (Twice The Ice) is excluded. Creator names and public entry IDs are saved in `content-creators.json`; FPLGameweek is a roster reference, not a runtime data provider. No extra API account, subscription or hosting is used.
+
+Each scheduled update fetches each creator's public entry and history from official FPL. The table has the same columns as Home, with creator name and actual team name, chip badges, rank among this roster, net last completed GW score, rank movement, calculated FTs and overall FPL rank. Ties use fewer non-chip transfers. Click a creator for their compact details and a public FPL link.
+
+If one creator request fails after retries, the previous complete creator snapshot is kept, with its own timestamp. It cannot prevent your friends' league from updating. After a season change, creator IDs must be verified and the `season` and `managers` fields in `content-creators.json` updated, because FPL IDs change annually. The roster is not automatically expanded if FPLGameweek adds names mid-season.
+
+Every table header is a button: click once to sort ascending, again for descending. Arrows show the current sort. Missing values stay at the bottom. Sorting does not change the actual rank values or other tables.
 
 ## Files and local preview (optional)
 

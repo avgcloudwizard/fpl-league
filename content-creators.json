@@ -1,0 +1,363 @@
+{
+  "season": 2026,
+  "checked_at": "2026-09-25",
+  "source": "https://www.fplgameweek.com/#/26/team/61950/league/special_10002",
+  "managers": [
+    {
+      "id": 3304,
+      "name": "FPL Marcello"
+    },
+    {
+      "id": 12949,
+      "name": "FPL Paz (All About FPL)"
+    },
+    {
+      "name": "Dan (FPL Mate)",
+      "id": 120
+    },
+    {
+      "name": "FPL Éire",
+      "id": 3449
+    },
+    {
+      "name": "Sertalp Çay (Solio Analytics)",
+      "id": 3333334
+    },
+    {
+      "name": "Ben (FPL Graduates)",
+      "id": 2230
+    },
+    {
+      "name": "Josh (FPL Graduates)",
+      "id": 1735
+    },
+    {
+      "name": "Fpl_Salah (FF Hub)",
+      "id": 70
+    },
+    {
+      "name": "Flapjack FPL",
+      "id": 148
+    },
+    {
+      "name": "Sujan (Planet FPL)",
+      "id": 84298
+    },
+    {
+      "name": "Nathan Bacon FC FPL",
+      "id": 344050
+    },
+    {
+      "name": "FPL Calle",
+      "id": 8781
+    },
+    {
+      "name": "BigManBakar (FF Hub)",
+      "id": 5133
+    },
+    {
+      "name": "FPL Tom",
+      "id": 5406
+    },
+    {
+      "name": "FPl Matt",
+      "id": 61059
+    },
+    {
+      "name": "FPL Joe",
+      "id": 660
+    },
+    {
+      "name": "Lee (FPL Family)",
+      "id": 2913
+    },
+    {
+      "name": "Tom (FPLCruyff74)",
+      "id": 22728
+    },
+    {
+      "name": "Andy (Let's Talk FPL)",
+      "id": 41
+    },
+    {
+      "name": "David (Dayvy FPL)",
+      "id": 31703
+    },
+    {
+      "name": "Andy (FPLMode)",
+      "id": 2325
+    },
+    {
+      "name": "FPL MV",
+      "id": 327213
+    },
+    {
+      "name": "Jonas (ASC_FPL)",
+      "id": 174
+    },
+    {
+      "name": "FPL Fran (The FPL Script)",
+      "id": 21
+    },
+    {
+      "name": "Ross (FPL Raptor)",
+      "id": 199
+    },
+    {
+      "name": "FPL Pricey (WGTA)",
+      "id": 125
+    },
+    {
+      "name": "Tom (FF Scout)",
+      "id": 16
+    },
+    {
+      "name": "Hamza (FPL Pattern)",
+      "id": 17739
+    },
+    {
+      "name": "BlackWolf (FPLUSA)",
+      "id": 194497
+    },
+    {
+      "name": "FPL Toni",
+      "id": 1890
+    },
+    {
+      "name": "FPL_Pig",
+      "id": 1932
+    },
+    {
+      "name": "Pras (The FPL Wire)",
+      "id": 3315
+    },
+    {
+      "name": "Siva (FPL Banger)",
+      "id": 4226
+    },
+    {
+      "name": "Ben Crellin (FF Hub)",
+      "id": 53517
+    },
+    {
+      "name": "Emma (Jumpthewave)",
+      "id": 15764
+    },
+    {
+      "name": "Rob (FPL Haul)",
+      "id": 16745
+    },
+    {
+      "name": "Ash (FPL Hints)",
+      "id": 405
+    },
+    {
+      "name": "FPLGeneral (59th Minute pod)",
+      "id": 176749
+    },
+    {
+      "name": "FPL Brandon",
+      "id": 222160
+    },
+    {
+      "name": "Oscar (FPL Focal)",
+      "id": 298
+    },
+    {
+      "name": "Baker343 (Above Average)",
+      "id": 4470
+    },
+    {
+      "name": "FPL Goat",
+      "id": 19518
+    },
+    {
+      "name": "Paul (FPL Addict)",
+      "id": 7241
+    },
+    {
+      "name": "FPL Nima (FPL Meets)",
+      "id": 918
+    },
+    {
+      "name": "FPL Pickle",
+      "id": 850
+    },
+    {
+      "name": "Zophar (FPL Wire)",
+      "id": 2177
+    },
+    {
+      "name": "Sam (FPL Family)",
+      "id": 2977
+    },
+    {
+      "name": "Alon (FML FPL)",
+      "id": 28410
+    },
+    {
+      "name": "Walsh (FML FPL)",
+      "id": 129818
+    },
+    {
+      "name": "FPL Plug",
+      "id": 16021
+    },
+    {
+      "name": "Holly Shand (FPL Show)",
+      "id": 70063
+    },
+    {
+      "name": "FPL Olympian",
+      "id": 362
+    },
+    {
+      "name": "FPL Architect",
+      "id": 1600
+    },
+    {
+      "name": "Srini (All About FPL)",
+      "id": 107881
+    },
+    {
+      "name": "Adam (Above Average FPL)",
+      "id": 157
+    },
+    {
+      "name": "Hibbo FPL (FFScout)",
+      "id": 42
+    },
+    {
+      "name": "FPL Harry",
+      "id": 3054
+    },
+    {
+      "name": "FPL The English Aussie",
+      "id": 116170
+    },
+    {
+      "name": "Rich Clarke (FF Hub)",
+      "id": 209763
+    },
+    {
+      "name": "FPL Physio",
+      "id": 117406
+    },
+    {
+      "name": "FPL Rookie (FPL Updates & Tips)",
+      "id": 494355
+    },
+    {
+      "name": "Surya (All About FPL)",
+      "id": 14891
+    },
+    {
+      "name": "FPL Prem Tipster",
+      "id": 739
+    },
+    {
+      "name": "Tom (Golden Goal Fantasy Football)",
+      "id": 225
+    },
+    {
+      "name": "Brian (FPLUSA)",
+      "id": 334289
+    },
+    {
+      "name": "Luke (Inspected Goals)",
+      "id": 71
+    },
+    {
+      "name": "James (Planet FPL)",
+      "id": 1194
+    },
+    {
+      "name": "FPL Mo",
+      "id": 5911
+    },
+    {
+      "name": "Sam (FPL Banger)",
+      "id": 185594
+    },
+    {
+      "name": "Seb Wassell (FF Scout)",
+      "id": 15753
+    },
+    {
+      "name": "David Hunter (Planet FPL)",
+      "id": 18135
+    },
+    {
+      "name": "Fpltips__ (Anshuman Deswal)",
+      "id": 325538
+    },
+    {
+      "name": "Tom (WGTA)",
+      "id": 454
+    },
+    {
+      "name": "FPL Rockstar",
+      "id": 19663
+    },
+    {
+      "name": "Alex Vollo",
+      "id": 15716
+    },
+    {
+      "name": "Lateriser12 (FPL Wire)",
+      "id": 6816
+    },
+    {
+      "name": "FPLFella",
+      "id": 19233
+    },
+    {
+      "name": "FPL JimmyG",
+      "id": 13162
+    },
+    {
+      "name": "Midnight Mule FPL",
+      "id": 2129
+    },
+    {
+      "name": "FPL Osama",
+      "id": 17314
+    },
+    {
+      "name": "Charlie (FPL Meerkat)",
+      "id": 4282
+    },
+    {
+      "name": "FPL Cim",
+      "id": 47742
+    },
+    {
+      "name": "FPL Updates & Tips (FF Scout)",
+      "id": 36474
+    },
+    {
+      "name": "Leon (FPL Consult)",
+      "id": 11859
+    },
+    {
+      "name": "FPL_Chai (FFScout)",
+      "id": 2157
+    },
+    {
+      "name": "Clayton (Planet FPL)",
+      "id": 1420249
+    },
+    {
+      "name": "Jian Batra (FF Hub)",
+      "id": 15489
+    },
+    {
+      "name": "Andy (FPL Tactician)",
+      "id": 5784
+    },
+    {
+      "name": "Nick (FPL Juice)",
+      "id": 2472
+    }
+  ]
+}
