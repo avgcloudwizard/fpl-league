@@ -17,6 +17,14 @@ def validate(data, league_id):
     for m in data['managers']:
         assert m['completed_count'] == len(m['history'])
         assert m['captain_coverage'] <= m['completed_count']
+        if 'ft' in m:
+            assert m['ft'] is None or 0 <= m['ft'] <= m['ft_cap']
+            assert m['mvp_coverage'] <= m['completed_count']
+            assert not m['mvp'] or m['mvp_coverage'] == m['completed_count']
+            for key in ('best', 'worst'):
+                assert all(any(r['gw'] == gw and r['net'] == m[key] for r in m['history']) for gw in m[key + '_gws'])
+    if 'prices' in data:
+        assert all(p['direction'] in (-1, 0, 1) for p in data['prices']['players'])
     print(f"Validated league {league_id}: {len(ids)} managers, {len(data['gameweeks'])} completed GWs")
 
 if __name__ == '__main__':
