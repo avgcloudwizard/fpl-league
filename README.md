@@ -1,5 +1,9 @@
 # Touchline — our FPL mini-league
 
+**Website:** [avgcloudwizard.github.io/fpl-league](https://avgcloudwizard.github.io/fpl-league/)
+
+**Manual refresh:** [Open the update workflow](https://github.com/avgcloudwizard/fpl-league/actions/workflows/update-fpl.yml)
+
 A small, mobile-friendly website for **Rank follows, my brother!**, FPL league **795551**. Friends can open the public website without signing in.
 
 Home, Gameweeks, Monthly, Season and Predictions include real standings, manager profiles, awards, small charts and transparent statistical projections. No AI is used.
