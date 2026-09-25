@@ -5,7 +5,7 @@ from pathlib import Path
 from scripts.update_fpl import (build_stats, captain_detail, normalize, write_json, main,
                                free_transfers, squad_detail, manager_mvp, price_watch, scoring_awards, update_creators, team_view)
 
-from scripts.season_model import forecast, remaining_chips, prize_tracker, award_months
+from scripts.season_model import forecast, calibrate_projections, remaining_chips, prize_tracker, award_months
 from scripts.refresh_due import refresh_due
 from datetime import datetime, timezone
 
@@ -27,7 +27,7 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(ms[0]['average'],55)
         self.assertEqual(ms[0]['hits'],4)
         self.assertEqual(ms[0]['completed_total'],110) # Excludes provisional 999
-        self.assertLess(ms[0]['projected_total'],2090)
+        self.assertTrue(2450 <= ms[0]['projected_total'] <= 2530)
         self.assertEqual(months[1]['rows'][0]['points'],60)
         self.assertIsNone(months[0]['rows'][0]['movement'])
         self.assertEqual(ms[0]['power'],50)
@@ -75,13 +75,24 @@ class ScoringTests(unittest.TestCase):
         m['chips']=[{'name':'3xc','gw':2}]
         result=forecast(m,38,2,chips)
         self.assertEqual(result,forecast(m,38,2,chips))
-        self.assertTrue(180<result['projected_total']<=2430)
+        self.assertGreater(result['projected_total'],180)
         self.assertEqual(len(result['chips_remaining']),7)
         self.assertEqual(len(remaining_chips(m['chips'],chips,19)),4)
         self.assertEqual(forecast(m,38,18,chips)['projection_chip_bonus'],48) # one slot before expiry + second set
         m['history']=[score(38,90,total=2600)]
         self.assertEqual(forecast(m,38,38,chips)['projected_total'],2600)
         self.assertIsNone(forecast(manager(2,[]),38,2,chips)['projected_total'])
+    def test_calibrated_projection_gaps_ties_and_actuals(self):
+        ms=[manager(i,[score(5,50,total=300)]) for i in [1,2,3]]
+        for m,value in zip(ms,[2200,2150,2150]):m['projected_total']=value
+        calibrate_projections(ms,33)
+        self.assertEqual([m['projected_total'] for m in ms],[2450,2400,2399])
+        for m,value in zip(ms,[2900,2870,2800]):m['projected_total']=value
+        calibrate_projections(ms,33)
+        self.assertEqual([m['projected_total'] for m in ms],[2530,2500,2430])
+        for m in ms:m['history']=[score(38,50,total=2600)];m['projected_total']=2600
+        calibrate_projections(ms,0)
+        self.assertEqual([m['projected_total'] for m in ms],[2600]*3)
     def test_prizes_only_complete_months_and_ties(self):
         config={'season_prizes':[20000,12000,8000],'monthly_prize':1500,'monthly_count':10,'buy_in':5000,'total_pool':55000}
         es=[{'deadline_time':date,'finished':done,'data_checked':done} for date,done in [('2026-08-15T12:00:00Z',True),('2026-09-15T12:00:00Z',True),('2026-10-15T12:00:00Z',False)]]
@@ -121,6 +132,8 @@ class ScoringTests(unittest.TestCase):
         build_stats(ms,events(),38)
         self.assertEqual(ms[0]['best_gw_rank'],10000)
         self.assertEqual(ms[0]['best_gw_rank_gws'],[1,2])
+        self.assertEqual(ms[0]['worst_gw_rank'],10000)
+        self.assertEqual(ms[0]['worst_gw_rank_gws'],[1,2])
     def test_creator_ranks_transfers_movement_and_failed_response(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)

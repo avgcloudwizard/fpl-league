@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 CHIP_BONUS = {'wildcard': 8, 'freehit': 8, 'bboost': 12, '3xc': 8}
 BASELINE = 50
-CEILING = 2430
+WINNER_RANGE = (2450, 2530)
 
 def remaining_chips(used, definitions, last_gw):
     available = []
@@ -39,14 +39,30 @@ def forecast(manager, total_gws, latest, definitions):
         bonus += sum(choices[:slots])  # One chip per GW; expired opportunities cannot roll over.
     actual = history[-1]['total']
     raw = actual + expected * remaining + (bonus if remaining else 0)
-    # Smoothly compress optimistic extrapolation rather than creating a tied ceiling.
-    room = max(0, CEILING - actual)
-    future = max(0, raw - actual)
-    damped = future / (1 + (future / room) ** 8) ** (1 / 8) if room else 0
-    projected = actual if not remaining else max(actual, round(actual + damped))
+    projected = actual if not remaining else max(actual, round(raw))
     return {'projected_total': projected, 'projection_raw': round(raw),
             'projection_expected_gw': round(expected, 2), 'projection_chip_bonus': bonus,
             'chips_remaining': chips}
+
+def calibrate_projections(managers, remaining):
+    """Set a shared season scoring scale while preserving form/chip point gaps."""
+    eligible = [m for m in managers if m.get('projected_total') is not None]
+    if not eligible or remaining <= 0:
+        return  # Final actual scores, including genuine ties, are never invented.
+    ordered = sorted(eligible, key=lambda m: (-m['projected_total'], m['rank'], m['id']))
+    leader = ordered[0]['projected_total']
+    target = max(WINNER_RANGE[0], min(WINNER_RANGE[1], leader))
+    previous = None
+    for m in ordered:
+        value = target - (leader - m['projected_total'])
+        m['projected_total'] = min(value, previous - 1) if previous is not None else value
+        previous = m['projected_total']
+    # Never project below points already earned, even late in an exceptional season.
+    floor = None
+    for m in reversed(ordered):
+        actual = m['history'][-1]['total']
+        m['projected_total'] = max(m['projected_total'], actual, floor + 1 if floor is not None else actual)
+        floor = m['projected_total']
 
 def month_key(event):
     return datetime.fromisoformat(event['deadline_time'].replace('Z', '+00:00')).astimezone(ZoneInfo('Europe/London')).strftime('%Y-%m')

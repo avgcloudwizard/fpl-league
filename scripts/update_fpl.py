@@ -9,9 +9,9 @@ import urllib.request
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 try:
-    from .season_model import forecast, award_months, prize_tracker
+    from .season_model import forecast, calibrate_projections, award_months, prize_tracker
 except ImportError:
-    from season_model import forecast, award_months, prize_tracker
+    from season_model import forecast, calibrate_projections, award_months, prize_tracker
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'https://fantasy.premierleague.com/api/'
@@ -199,6 +199,7 @@ def build_stats(managers, events, total_events, start_event=1, chip_definitions=
         projection = forecast(m, total_events, latest_completed if latest_completed is not None else (last_id or 0), chip_definitions or [])
         gw_ranks = [r['overall_gw_rank'] for r in hist if r.get('overall_gw_rank')]
         best_gw_rank = min(gw_ranks, default=None)
+        worst_gw_rank = max(gw_ranks, default=None)
         momentum = positions[-min(5, len(positions))]['league_rank'] - positions[-1]['league_rank'] if positions else 0
         m.update(average=season_avg, recent_average=recent_avg, recent=hist[-5:],
                  best=max(scores) if scores else None, worst=min(scores) if scores else None,
@@ -212,6 +213,7 @@ def build_stats(managers, events, total_events, start_event=1, chip_definitions=
                  biggest_rise=max([r['movement'] or 0 for r in positions] + [0]),
                  latest_score=last['net'] if last else None, momentum=momentum,
                  completed_total=completed_total, **projection,
+                 worst_gw_rank=worst_gw_rank, worst_gw_rank_gws=[r['gw'] for r in hist if worst_gw_rank and r.get('overall_gw_rank') == worst_gw_rank],
                  best_gw_rank=best_gw_rank, best_gw_rank_gws=[r['gw'] for r in hist if best_gw_rank and r.get('overall_gw_rank') == best_gw_rank])
     eligible = [m for m in managers if m['average'] is not None]
     for m in managers:
@@ -223,6 +225,7 @@ def build_stats(managers, events, total_events, start_event=1, chip_definitions=
         m['power'] = round(power)
         form = normalize(m['recent_average'], [x['recent_average'] for x in eligible])
         m['form'] = 'Excellent' if form >= 75 else 'Good' if form >= 50 else 'Steady' if form >= 25 else 'Cold streak'
+    calibrate_projections(eligible, total_events - (latest_completed if latest_completed is not None else (last_id or 0)))
     ranks(eligible, lambda m: -m['projected_total'], 'projected_position')
     monthly = []
     for month in sorted(set(e['month'] for e in events)):

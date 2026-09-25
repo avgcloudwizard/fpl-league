@@ -32,11 +32,16 @@ def validate(data, league_id):
                 assert all(r['points'] <= 4 for r in m['captain_failure_details'])
                 assert m['hauls'] >= 0
         if m.get('projected_total') is not None:
-            assert m['completed_total'] <= m['projected_total'] <= max(2430, m['completed_total'])
+            assert m['completed_total'] <= m['projected_total']
         if m.get('public_team'):
             players = m['public_team']['players']
             assert len({p['id'] for p in players}) == 15
             assert sorted(p['slot'] for p in players) == list(range(1, 16))
+    projections = [m['projected_total'] for m in data['managers'] if m.get('projected_total') is not None]
+    if projections and data['latest_completed'] < data['total_gameweeks']:
+        assert len(projections) == len(set(projections)), 'Scenario projections must be distinct'
+        if max(m['completed_total'] for m in data['managers']) < 2400:
+            assert 2450 <= max(projections) <= 2530
     if data.get('prizes'):
         prize = data['prizes']
         assert sum(r['earned'] for r in prize['rows']) == prize['allocated']

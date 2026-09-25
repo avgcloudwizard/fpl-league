@@ -29,3 +29,12 @@ nav{gap:24px}.chip-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}.ch
 @media(max-width:1100px){.header-inner{flex-wrap:wrap;padding-top:16px;gap:12px 24px}nav{overflow-x:auto;max-width:100%;min-height:46px}.brand{flex-shrink:0}}
 @media(max-width:600px){.header-inner{padding-top:0;flex-wrap:nowrap}.home-hero,.money-hero{padding:24px 18px;min-height:215px}.home-hero::before,.money-hero::before{background-position:110% 22%;background-size:auto 310px;opacity:.55}.home-hero::after,.money-hero::after{background:linear-gradient(90deg,#142219d9,#14221955)}.home-hero h1{max-width:270px}.creator-controls{justify-content:flex-start;width:100%}.search-field{flex:1;min-width:180px}.search-field input{width:100%}.money-awards{padding:0 16px}.money-awards li{grid-template-columns:1fr auto;gap:8px}.money-awards li>span{grid-column:1/-1}.money-summary{grid-template-columns:1fr 1fr}.money-summary .stat-card:last-child{grid-column:1/-1}.prize-podium{font-size:16px}.profile-top{gap:18px 14px}.profile-top>div:last-child{grid-column:auto}.pitch-player strong{font-size:9px}.header-label{display:none}nav{justify-content:flex-start;gap:14px;overflow-x:auto;padding-left:16px;padding-right:16px}.money-hero .page-heading{gap:16px}}
 @media(prefers-reduced-motion:reduce){.money-rain,.rain-toggle{display:none}}
+
+/* One continuous landscape crop; no inset portrait edges on wide screens. */
+.home-hero::before,.money-hero::before{background-image:url('./assets/ravi-kishan-wide.webp');background-size:cover;background-position:center 35%;filter:blur(1.5px);opacity:.65}
+.home-hero::after,.money-hero::after{background:linear-gradient(90deg,#101c16eb 0%,#101c16a6 46%,#101c1645 100%)}
+.home-hero,.money-hero{min-height:225px}
+.stat .gw-ref{font-size:11px;letter-spacing:0;font-weight:400;white-space:normal}
+@media(min-width:900px){.home-hero::before,.money-hero::before{background-position:center 38%}.home-hero h1{max-width:640px}}
+@media(max-width:600px){.home-hero::before,.money-hero::before{background-size:cover;background-position:53% center;opacity:.66}.home-hero::after,.money-hero::after{background:linear-gradient(90deg,#101c16b8,#101c166b)}.home-hero,.money-hero{min-height:235px}}
+@media(min-width:900px){.home-hero::before,.money-hero::before{left:42%;background-position:center 8%;mask-image:linear-gradient(90deg,transparent,#000 24%)}.home-hero::after,.money-hero::after{background:linear-gradient(90deg,#101c16d9 0%,#101c1680 52%,#101c162b 100%)}}
