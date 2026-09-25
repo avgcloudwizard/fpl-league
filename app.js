@@ -38,6 +38,19 @@ function projectionTable(compact=false) {
  cell(medal(m.projected_position),'rank-cell'),cell(person(m)),...(!compact?[cell(num(m.total),'numeric')]:[]),cell('#'+m.rank,'numeric'),
  cell(`<div class="projection-bar"><span>${num(m.projected_total)}</span><div class="power-track"><i style="width:${Math.max(0,m.projected_total)/max*100}%"></i></div></div>`),cell(movement(m.rank-m.projected_position),'',m.rank-m.projected_position)])));
 }
+function ownershipAwards(ms){
+ const players=new Map((data.prices?.players||[]).map(p=>[p.id,p]));
+ const rows=ms.map(m=>{
+  const squad=m.public_team?.players;
+  if(!squad||squad.length!==15||m.public_team.stale||squad.some(p=>!players.has(p.id)||!Number.isFinite(players.get(p.id).ownership)))return null;
+  return {...m, differential_count:squad.filter(p=>players.get(p.id).ownership<5&&!(p.role===1&&players.get(p.id).price<=4)).length,
+   template_ownership:Math.round(squad.reduce((sum,p)=>sum+players.get(p.id).ownership,0)*10)/10};
+ });
+ if(!rows.length||rows.some(m=>!m))return '';
+ const differentials=best(rows,'differential_count'),template=best(rows,'template_ownership');
+ return award('🫧 Eno amongst us',differentials,num(differentials[0].differential_count)+' players','Under 5% overall FPL ownership · public 15-player squad · excludes goalkeepers priced £4.0m or less')+
+  award('🧩 Bakar amongst us',template,num(template[0].template_ownership,1)+'%','Combined overall FPL ownership across all 15 public squad players · not effective ownership');
+}
 function home() {
  const ms=sortedManagers(), arrows=ms.map(m=>{const latest=m.history.find(r=>r.gw===data.latest_completed), previous=m.history.find(r=>r.gw===data.latest_completed-1);return {...m,last_gw_arrow:latest?.overall_rank&&previous?.overall_rank?(previous.overall_rank-latest.overall_rank)/previous.overall_rank*100:null};}), last=data.gameweeks.at(-1), winner=last?best(last.rows,'net'):[], high=best(ms,'best_gw_rank',true), low=best(ms,'worst_gw_rank'), up=best(arrows.filter(m=>m.last_gw_arrow>0),'last_gw_arrow'), down=best(arrows.filter(m=>m.last_gw_arrow<0),'last_gw_arrow',true), power=best(ms,'power')[0];
  return `<section class="home-hero">${heading(data.name, `${ms.length} managers. One league. Everything to play for.`)}</section>`+
@@ -52,6 +65,7 @@ function home() {
  ${award('📉 Biggest red arrow last GW',down,down.length?'↓ '+num(Math.abs(down[0].last_gw_arrow),1)+'%':'','Overall rank decline in GW'+data.latest_completed,{color:'down'})}
  ${award('🪑 Most bench points',best(ms,'bench'),num(best(ms,'bench')[0]?.bench)+' pts','Completed Gameweeks')}
  ${award('🫙 The Ghee Khatam GW',low,num(low[0]?.worst_gw_rank)+(low.length===1?' '+gwSuffix(low[0].worst_gw_rank_gws):''),'Worst overall FPL Gameweek rank',{gws:low.length>1?'worst_gw_rank_gws':null})}
+ ${ownershipAwards(ms)}
  </div></section><section class="section panel"><div class="panel-heading"><h2>Projected final standings</h2><a class="text-link" href="#predictions">The full picture ↗</a></div>${projectionTable(true)}<p class="table-note">Illustrative season projection using recent form, season form and chips remaining — not a guarantee.</p></section>`;
 }
 function gameweeks() {
@@ -69,8 +83,8 @@ function monthly(){
  if(!data.months.length)return heading('Month by month','A fresh race, every month.')+empty('Monthly standings appear after the first completed Gameweek.');
  const month=data.months.find(m=>m.id===monthSelection)||data.months.at(-1);monthSelection=month.id;
  const control=`<div class="filters"><label for="month-select">Month</label><select id="month-select">${[...data.months].reverse().map(m=>`<option value="${m.id}" ${month.id===m.id?'selected':''}>${esc(m.label)}</option>`).join('')}</select></div>`;
- const winners=best(month.rows,'points');
- return heading('Month by month',`Gameweeks ${month.gameweeks.join(', ')} · grouped by deadline month (UK time)`,control)+`<div class="cards">${award('🏆 Manager of the Month',winners,num(winners[0]?.points)+' pts',month.label)}</div><section class="section panel"><div class="panel-heading"><h2>${esc(month.label)}</h2><span class="subtext">${month.gameweeks.length} completed GWs</span></div>`+table(['Position','Manager','Points','Best GW','Worst GW','Season rank change'],month.rows.map(m=>row([cell(medal(m.rank)),cell(person(m)),cell(num(m.points),'total'),cell(scoreWithGW(m,'best')),cell(scoreWithGW(m,'worst')),cell(movement(m.movement),'',m.movement??'')])))+`<p class="table-note">Monthly scores include transfer hits in each included GW. Rank change compares the season table before and after the month; the first month has no prior rank. An ongoing month only includes completed Gameweeks.</p></section>`;
+ const winners=best(month.rows,'points'), lowest=best(month.rows,'points',true);
+ return heading('Month by month',`Gameweeks ${month.gameweeks.join(', ')} · grouped by deadline month (UK time)`,control)+`<div class="cards">${award('🏆 Manager of the Month',winners,num(winners[0]?.points)+' pts',month.label)}${award('🎭 Fraud of the Month',lowest,num(lowest[0]?.points)+' pts',month.label+' · lowest points after hits')}</div><section class="section panel"><div class="panel-heading"><h2>${esc(month.label)}</h2><span class="subtext">${month.gameweeks.length} completed GWs</span></div>`+table(['Position','Manager','Points','Best GW','Worst GW','Season rank change'],month.rows.map(m=>row([cell(medal(m.rank)),cell(person(m)),cell(num(m.points),'total'),cell(scoreWithGW(m,'best')),cell(scoreWithGW(m,'worst')),cell(movement(m.movement),'',m.movement??'')])))+`<p class="table-note">Monthly scores include transfer hits in each included GW. Rank change compares the season table before and after the month; the first month has no prior rank. An ongoing month only includes completed Gameweeks.</p></section>`;
 }
 function season(){
  const ms=sortedManagers();
@@ -86,10 +100,11 @@ function priceChange(value) {
 function priceTable(players) {
  if(!players.length)return empty('No players match this group in the latest snapshot.');
  const sorted=[...players].sort((a,b)=>Math.abs(b.projected_progress??0)-Math.abs(a.projected_progress??0));
- return table(['Player','Price','Owned','GW change','Next price update','Projected progress'],sorted.map(p=>row([
-  cell(playerTile(p)),cell('£'+p.price.toFixed(1)+'m'),cell(num(p.ownership,1)+'%'),cell(priceChange(p.gw_change),'',p.gw_change??''),
-  cell(`<span class="price-status ${p.direction>0?'up':p.direction<0?'down':'muted'}">${p.direction>0?'↑ ':p.direction<0?'↓ ':''}${esc(p.status)}</span>`),
-  cell(p.projected_progress==null?'—':`<span class="${p.projected_progress>0?'up':p.projected_progress<0?'down':'muted'}">${p.projected_progress>0?'+':''}${num(p.projected_progress,1)}%</span><div class="price-track ${p.projected_progress<0?'fall':''}"><i style="width:${Math.min(100,Math.abs(p.projected_progress))}%"></i></div>`)
+ return table(['Player','Trend','Price','Owned','GW change','Next price update'],sorted.map(p=>row([
+  cell(playerTile(p)),
+  cell(p.projected_progress==null?'—':`<span class="${p.projected_progress>0?'up':p.projected_progress<0?'down':'muted'}">${p.projected_progress>0?'+':''}${num(p.projected_progress,1)}%</span><div class="price-track ${p.projected_progress<0?'fall':''}"><i style="width:${Math.min(100,Math.abs(p.projected_progress))}%"></i></div>`,'trend-cell',p.projected_progress??''),
+  cell('£'+p.price.toFixed(1)+'m'),cell(num(p.ownership,1)+'%'),cell(priceChange(p.gw_change),'',p.gw_change??''),
+  cell(`<span class="price-status ${p.direction>0?'up':p.direction<0?'down':'muted'}">${p.direction>0?'↑ ':p.direction<0?'↓ ':''}${esc(p.status)}</span>`)
  ])),'price-table');
 }
 function prices() {
