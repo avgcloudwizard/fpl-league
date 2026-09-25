@@ -3,7 +3,7 @@ from unittest.mock import patch
 import tempfile
 from pathlib import Path
 from scripts.update_fpl import (build_stats, captain_detail, normalize, write_json, main,
-                               free_transfers, squad_detail, manager_mvp, price_watch, scoring_awards, update_creators, team_view)
+                               free_transfers, squad_detail, manager_mvp, price_watch, scoring_awards, update_creators, team_view, creator_team)
 
 from scripts.season_model import forecast, calibrate_projections, remaining_chips, prize_tracker, award_months
 from scripts.refresh_due import refresh_due
@@ -155,6 +155,28 @@ class ScoringTests(unittest.TestCase):
                 with self.assertRaises(ValueError):update_creators('2027',2,5,38)
             with patch('scripts.update_fpl.ROOT',root),patch('scripts.update_fpl.fetch',side_effect=RuntimeError('unavailable')):
                 with self.assertRaises(RuntimeError):update_creators('2026',2,5,38)
+    def test_creator_squads_cache_refresh_and_failure(self):
+        elements={i:{'id':i,'web_name':str(i),'team':1,'code':i,'element_type':1 if i in [1,12] else 3} for i in range(1,16)}
+        picks={'picks':[{'element':i,'position':i,'multiplier':2 if i==2 else 1 if i<=11 else 0,'is_captain':i==2} for i in range(1,16)]}
+        live={5:{i:2 for i in elements},6:{i:3 for i in elements}}
+        cache={}
+        with patch('scripts.update_fpl.fetch',return_value=picks) as api:
+            first=creator_team(42,5,5,elements,{1:'ABC'},live,cache)
+            self.assertEqual(len(first['players']),15)
+            self.assertEqual(first['players'][1]['earned'],4)
+            self.assertTrue(first['players'][1]['captain'])
+            self.assertEqual(creator_team(42,5,5,elements,{1:'ABC'},live,cache),first)
+            self.assertEqual(api.call_count,1) # Final squads reuse cache.
+            active=creator_team(42,6,5,elements,{1:'ABC'},live,cache)
+            self.assertFalse(active['final'])
+            creator_team(42,6,5,elements,{1:'ABC'},live,cache)
+            self.assertEqual(api.call_count,3) # Live picks refresh each run.
+        with patch('scripts.update_fpl.fetch',side_effect=RuntimeError('unavailable')):
+            stale=creator_team(42,6,5,elements,{1:'ABC'},live,cache)
+            self.assertTrue(stale['stale'])
+            self.assertEqual(stale['players'],active['players'])
+            self.assertNotIn('stale',cache['42']['team'])
+            self.assertIsNone(creator_team(99,6,5,elements,{1:'ABC'},live,cache))
     def test_normalization(self):
         self.assertEqual(normalize(8,[8,8]),50)
         self.assertEqual(normalize(9,[1,9]),100)

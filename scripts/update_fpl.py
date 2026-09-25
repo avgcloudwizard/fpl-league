@@ -255,7 +255,34 @@ def comparison_history(current, chips):
             'previous_overall_rank': before.get('overall_rank') if before else None,
             'previous_transfers': sum(r['event_transfers'] for r in current if r['event'] < public_gw and chips.get(r['event']) not in ('wildcard', 'freehit'))}
 
-def update_creators(season, latest, cap, total_events):
+def creator_team(entry, gw, latest, elements, teams, live_cache, cache):
+    """Only the latest public squad; checked squads are cached for one week."""
+    if not gw:
+        return None
+    saved = cache.get(str(entry), {})
+    previous = saved.get('team')
+    final = gw <= latest
+    if previous and previous['gw'] == gw and previous['final'] == final and final and time.time() - saved.get('fetched_at', 0) < 7 * 86400:
+        return previous
+    try:
+        if gw not in live_cache:
+            response = fetch(f'event/{gw}/live/')
+            live_cache[gw] = {p['id']: p['stats']['total_points'] for p in response['elements']}
+        picks = fetch(f'entry/{entry}/event/{gw}/picks/')
+        detail = squad_detail(picks, live_cache[gw], {key: p['web_name'] for key, p in elements.items()})
+        team = team_view(detail, elements, teams, live_cache[gw], gw, final)
+        if not team or len(team['players']) != 15:
+            raise ValueError('Incomplete public squad')
+        team['updated_at'] = datetime.now(timezone.utc).isoformat()
+        cache[str(entry)] = {'team': team, 'fetched_at': time.time()}
+        return team
+    except Exception as exc:
+        print(f'Creator squad unavailable for {entry}: {type(exc).__name__}; keeping previous squad if available.', file=sys.stderr)
+        return {**previous, 'stale': True} if previous else None
+
+def update_creators(season, latest, cap, total_events, elements=None, teams=None, live_cache=None, team_cache=None):
+    live_cache = live_cache if live_cache is not None else {}
+    team_cache = team_cache if team_cache is not None else {}
     roster = json.loads((ROOT / 'content-creators.json').read_text())
     if str(roster['season']) != season:
         raise ValueError('Creator team IDs need checking for the new season')
@@ -269,7 +296,8 @@ def update_creators(season, latest, cap, total_events):
         chips = {c['event']: c['name'] for c in history.get('chips', [])}
         latest_row = next((r for r in current if r['event'] == latest), None)
         public_gw = max((r['event'] for r in current), default=0)
-        managers.append({'id': entry, 'creator': True, 'name': creator['name'], 'team': profile['name'],
+        public_team = creator_team(entry, public_gw, latest, elements, teams, live_cache, team_cache) if elements else None
+        managers.append({'public_team': public_team, 'id': entry, 'creator': True, 'name': creator['name'], 'team': profile['name'],
                          'total': profile['summary_overall_points'], 'live_rank': profile['summary_overall_rank'],
                          'latest_score': latest_row['points'] - latest_row['event_transfers_cost'] if latest_row else None,
                          'ft': free_transfers(current, chips, cap), 'ft_cap': cap,
@@ -424,7 +452,7 @@ def main():
         warnings.append('Fixture refresh failed; previous matchday schedule retained.')
     creators = None
     try:
-        creators = update_creators(season, latest, ft_cap, len(bootstrap['events']))
+        creators = update_creators(season, latest, ft_cap, len(bootstrap['events']), elements, teams, live_cache, cache.setdefault('creator_teams', {}))
     except Exception as exc:
         previous_path = ROOT / 'data/league.json'
         previous = json.loads(previous_path.read_text()) if previous_path.exists() else {}

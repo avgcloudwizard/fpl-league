@@ -53,6 +53,11 @@ def validate(data, league_id):
         assert len(creator_ids) == len(set(creator_ids))
         assert all(m['rank'] >= 1 and m['total'] is not None for m in creators)
         assert all(m['ft'] is None or 0 <= m['ft'] <= m['ft_cap'] for m in creators)
+        for m in creators:
+            if m.get('public_team'):
+                players = m['public_team']['players']
+                assert len({p['id'] for p in players}) == 15
+                assert sorted(p['slot'] for p in players) == list(range(1,16))
     if 'prices' in data:
         assert all(p['direction'] in (-1, 0, 1) for p in data['prices']['players'])
     print(f"Validated league {league_id}: {len(ids)} managers, {len(data['gameweeks'])} completed GWs")
