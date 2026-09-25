@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Public FPL -> one consistent JSON snapshot. Python standard library only."""
 import json
-import hashlib
-import random
 import os
 from pathlib import Path
 import sys
@@ -10,6 +8,10 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+try:
+    from .season_model import forecast, award_months, prize_tracker
+except ImportError:
+    from season_model import forecast, award_months, prize_tracker
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'https://fantasy.premierleague.com/api/'
@@ -73,6 +75,8 @@ def squad_detail(picks, live, players):
     detail = captain_detail(picks, live, players)
     squad = picks.get('picks', [])
     detail['squad'] = [p['element'] for p in squad]
+    detail['lineup'] = [{k: p.get(k) for k in ('element', 'position', 'multiplier', 'is_captain', 'is_vice_captain')} for p in squad]
+    detail['automatic_subs'] = picks.get('automatic_subs', [])
     # Zero-multiplier bench players earned no points for this manager.
     active = [p for p in squad if p.get('multiplier', 0) > 0]
     if squad and all(p['element'] in live for p in active):
@@ -158,16 +162,7 @@ def scoring_awards(history, details, entry):
             'captain_failure_details': failures if complete else [],
             'hauls': hauls if complete else None, 'awards_coverage': coverage}
 
-def projection(completed_total, expected, remaining, seed):
-    if expected is None:
-        return None, None, None
-    # A new reproducible random scenario per manager and completed GW.
-    rng = random.Random(hashlib.sha256(seed.encode()).digest())
-    variance = round(rng.choice([-1, 1]) * rng.uniform(2, 5), 2) if remaining else 0
-    base = completed_total + expected * remaining
-    return round(completed_total + expected * remaining * (1 + variance / 100)), round(base), variance
-
-def build_stats(managers, events, total_events, start_event=1):
+def build_stats(managers, events, total_events, start_event=1, chip_definitions=None, latest_completed=None):
     completed_ids = [e['id'] for e in events]
     by_gw = []
     previous = {}
@@ -201,8 +196,7 @@ def build_stats(managers, events, total_events, start_event=1):
         season_avg, recent_avg = average(scores), average(recent)
         # Official current total may include an unfinished GW. Do not project it twice.
         completed_total = hist[-1]['total'] if hist else 0
-        expected = .65 * recent_avg + .35 * season_avg if scores else None
-        projected, projected_base, variance = projection(completed_total, expected, max(0, total_events - len(completed_ids)), f"{events[0]['month'] if events else ''}:{last_id}:{m['id']}")
+        projection = forecast(m, total_events, latest_completed if latest_completed is not None else (last_id or 0), chip_definitions or [])
         gw_ranks = [r['overall_gw_rank'] for r in hist if r.get('overall_gw_rank')]
         best_gw_rank = min(gw_ranks, default=None)
         momentum = positions[-min(5, len(positions))]['league_rank'] - positions[-1]['league_rank'] if positions else 0
@@ -217,7 +211,7 @@ def build_stats(managers, events, total_events, start_event=1):
                  wins=sum(r['gw_rank'] == 1 for r in positions),
                  biggest_rise=max([r['movement'] or 0 for r in positions] + [0]),
                  latest_score=last['net'] if last else None, momentum=momentum,
-                 completed_total=completed_total, projected_total=projected, projected_base=projected_base, projection_variance=variance,
+                 completed_total=completed_total, **projection,
                  best_gw_rank=best_gw_rank, best_gw_rank_gws=[r['gw'] for r in hist if best_gw_rank and r.get('overall_gw_rank') == best_gw_rank])
     eligible = [m for m in managers if m['average'] is not None]
     for m in managers:
@@ -255,6 +249,7 @@ def comparison_history(current, chips):
     before = max((r for r in current if r['event'] < public_gw), key=lambda r: r['event'], default=None)
     return {'tie_transfers': sum(r['event_transfers'] for r in current if chips.get(r['event']) not in ('wildcard', 'freehit')),
             'previous_total': before['total_points'] if before else None,
+            'previous_overall_rank': before.get('overall_rank') if before else None,
             'previous_transfers': sum(r['event_transfers'] for r in current if r['event'] < public_gw and chips.get(r['event']) not in ('wildcard', 'freehit'))}
 
 def update_creators(season, latest, cap, total_events):
@@ -285,6 +280,22 @@ def update_creators(season, latest, cap, total_events):
         m['movement'] = m['previous_rank'] - m['rank'] if 'previous_rank' in m else None
     return {'updated_at': datetime.now(timezone.utc).isoformat(), 'roster_checked_at': roster['checked_at'], 'latest_completed': latest,
             'source': roster['source'], 'managers': sorted(managers, key=lambda m: m['rank'])}
+
+def team_view(detail, elements, teams, live, gw, final):
+    picks = [dict(p) for p in detail.get('lineup', [])]
+    if not picks:
+        return None
+    by_id = {p['element']: p for p in picks}
+    for sub in detail.get('automatic_subs', []):
+        incoming, outgoing = by_id.get(sub['element_in']), by_id.get(sub['element_out'])
+        if incoming and outgoing and incoming['position'] > 11 and outgoing['position'] <= 11:
+            incoming['position'], outgoing['position'] = outgoing['position'], incoming['position']
+    return {'gw': gw, 'final': final, 'chip': detail.get('chip'), 'players': [
+        {**player_info(elements[p['element']], teams), 'role': elements[p['element']]['element_type'],
+         'slot': p['position'], 'multiplier': p['multiplier'], 'captain': p['multiplier'] > 1,
+         'vice': p.get('is_vice_captain', False), 'points': live.get(p['element']),
+         'earned': live[p['element']] * p['multiplier'] if p['element'] in live else None}
+        for p in sorted(picks, key=lambda p: p['position']) if p['element'] in elements]}
 
 def main():
     config = json.loads((ROOT / 'config.json').read_text())
@@ -348,7 +359,7 @@ def main():
                     print(f'Optional detail failed: {type(exc).__name__}', file=sys.stderr)
             rows.append({'gw': gw, 'gross': h['points'], 'net': h['points'] - h['event_transfers_cost'],
                          'hits': h['event_transfers_cost'], 'transfers': h['event_transfers'],
-                         'overall_gw_rank': h.get('rank'), 'total': h['total_points'], 'bench': h['points_on_bench'],
+                         'overall_rank': h.get('overall_rank'), 'overall_gw_rank': h.get('rank'), 'total': h['total_points'], 'bench': h['points_on_bench'],
                          'chip': chips.get(gw), **{k: v for k, v in detail.items() if k.startswith('captain')}})
         rows.sort(key=lambda r: r['gw'])
         latest_history = history['current'][-1] if history['current'] else {}
@@ -362,6 +373,19 @@ def main():
                 squad = [p['element'] for p in picks['picks']]
             except Exception:
                 warnings.append(f'Public squad unavailable for {s["entry_name"]}.')
+        public_team = None
+        if public_gw:
+            team_detail = details.get(f'{entry}:{public_gw}', {})
+            try:
+                if public_gw not in completed_ids or not team_detail.get('lineup'):
+                    picks = fetch(f'entry/{entry}/event/{public_gw}/picks/')
+                    if public_gw not in live_cache:
+                        live_data = fetch(f'event/{public_gw}/live/')
+                        live_cache[public_gw] = {p['id']: p['stats']['total_points'] for p in live_data['elements']}
+                    team_detail = squad_detail(picks, live_cache[public_gw], players)
+                public_team = team_view(team_detail, elements, teams, live_cache.get(public_gw, {}), public_gw, public_gw in completed_ids)
+            except Exception:
+                warnings.append(f'Public team details unavailable for {s["entry_name"]}.')
         mvp, mvp_coverage = manager_mvp(rows, details, entry, elements, teams)
         managers.append({'id': entry, 'name': s['player_name'], 'team': s['entry_name'],
                          'rank': s['rank'], 'total': s['total'], 'event_total': s['event_total'],
@@ -375,10 +399,26 @@ def main():
                          'squad': squad, 'squad_gw': squad_gw or None,
                          'squad_restored': chips.get(public_gw) == 'freehit',
                          'mvp': mvp, 'mvp_coverage': mvp_coverage,
+                         'public_team': public_team,
                          **scoring_awards(rows, details, entry),
                          **comparison_history(history['current'], chips),
                          'value': latest_history.get('value', 0) / 10 or None, 'history': rows})
-    gameweeks, monthly = build_stats(managers, events, len(bootstrap['events']), start)
+    gameweeks, monthly = build_stats(managers, events, len(bootstrap['events']), start, bootstrap.get('chips', []), latest)
+    award_months(monthly, bootstrap['events'])
+    prizes = prize_tracker(managers, monthly, bootstrap['events'], config['prizes'])
+    for m in managers:
+        previous_rank = m.get('previous_overall_rank')
+        m['overall_movement_percent'] = (previous_rank - m['live_rank']) / previous_rank * 100 if previous_rank and m.get('live_rank') else None
+        m['overall_movement_gw'] = max((r['gw'] for r in m['history']), default=0)
+        if m.get('ft_gw'):
+            m['overall_movement_gw'] = m['ft_gw'] - 1
+    try:
+        fixture_kickoffs = [f['kickoff_time'] for f in fetch('fixtures/') if f.get('kickoff_time')]
+    except Exception:
+        prior_path = ROOT / 'data/league.json'
+        prior = json.loads(prior_path.read_text()) if prior_path.exists() else {}
+        fixture_kickoffs = prior.get('fixture_kickoffs', [])
+        warnings.append('Fixture refresh failed; previous matchday schedule retained.')
     creators = None
     try:
         creators = update_creators(season, latest, ft_cap, len(bootstrap['events']))
@@ -397,7 +437,8 @@ def main():
             'total_gameweeks': len(bootstrap['events']),
             'current_gw': active['id'] if active else None,
             'in_progress': bool(active and active['id'] not in completed_ids),
-            'prices': price_watch(bootstrap), 'creators': creators,
+            'prices': price_watch(bootstrap), 'refresh_minutes_matchday': config.get('matchday_minutes', 15),
+            'fixture_kickoffs': fixture_kickoffs, 'prizes': prizes, 'creators': creators,
             'warnings': warnings, 'managers': managers, 'gameweeks': gameweeks, 'months': monthly}
     write_json(ROOT / 'data/league.json', data)
     write_json(cache_path, cache)

@@ -1,1 +1,17 @@
-{"league_id":795551,"refresh_hours":6}
+{
+  "league_id": 795551,
+  "refresh_hours": 6,
+  "matchday_minutes": 15,
+  "prizes": {
+    "players": 11,
+    "buy_in": 5000,
+    "total_pool": 55000,
+    "season_prizes": [
+      20000,
+      12000,
+      8000
+    ],
+    "monthly_prize": 1500,
+    "monthly_count": 10
+  }
+}

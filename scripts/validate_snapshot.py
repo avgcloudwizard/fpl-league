@@ -31,9 +31,17 @@ def validate(data, league_id):
                 assert m['captain_failures'] == len(m['captain_failure_details'])
                 assert all(r['points'] <= 4 for r in m['captain_failure_details'])
                 assert m['hauls'] >= 0
-        if m.get('projection_variance') is not None:
-            remaining = data['total_gameweeks'] - data['completed_count']
-            assert (2 <= abs(m['projection_variance']) <= 5) if remaining else m['projection_variance'] == 0
+        if m.get('projected_total') is not None:
+            assert m['completed_total'] <= m['projected_total'] <= max(2430, m['completed_total'])
+        if m.get('public_team'):
+            players = m['public_team']['players']
+            assert len({p['id'] for p in players}) == 15
+            assert sorted(p['slot'] for p in players) == list(range(1, 16))
+    if data.get('prizes'):
+        prize = data['prizes']
+        assert sum(r['earned'] for r in prize['rows']) == prize['allocated']
+        assert prize['allocated'] <= prize['total_pool']
+        assert all(r['net'] == r['earned'] - prize['buy_in'] for r in prize['rows'])
     if data.get('creators'):
         creators = data['creators']['managers']
         creator_ids = [m['id'] for m in creators]

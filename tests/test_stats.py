@@ -3,7 +3,11 @@ from unittest.mock import patch
 import tempfile
 from pathlib import Path
 from scripts.update_fpl import (build_stats, captain_detail, normalize, write_json, main,
-                               free_transfers, squad_detail, manager_mvp, price_watch, scoring_awards, projection, update_creators)
+                               free_transfers, squad_detail, manager_mvp, price_watch, scoring_awards, update_creators, team_view)
+
+from scripts.season_model import forecast, remaining_chips, prize_tracker, award_months
+from scripts.refresh_due import refresh_due
+from datetime import datetime, timezone
 
 def manager(entry, history):
     return {'id': entry, 'name': str(entry), 'team': 'Team '+str(entry), 'history': history, 'rank':entry, 'total':999}
@@ -22,7 +26,8 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(ms[0]['wins'],2)
         self.assertEqual(ms[0]['average'],55)
         self.assertEqual(ms[0]['hits'],4)
-        self.assertEqual(ms[0]['projected_base'],2090) # Uses completed total, not provisional 999
+        self.assertEqual(ms[0]['completed_total'],110) # Excludes provisional 999
+        self.assertLess(ms[0]['projected_total'],2090)
         self.assertEqual(months[1]['rows'][0]['points'],60)
         self.assertIsNone(months[0]['rows'][0]['movement'])
         self.assertEqual(ms[0]['power'],50)
@@ -64,14 +69,51 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual((result['captain_failures'],result['hauls']),(0,1))
         self.assertIsNone(scoring_awards([score(1,48)],{'7:1':detail},7)['hauls'])
         self.assertIsNone(scoring_awards([score(1,47),score(2,40)],{'7:1':detail},7)['captain_failures'])
-    def test_projection_stability_bounds_and_final_season(self):
-        values=[projection(500,60,28,str(i)) for i in range(20)]
-        self.assertTrue(all(2<=abs(v[2])<=5 for v in values))
-        self.assertTrue(any(v[2]<0 for v in values) and any(v[2]>0 for v in values))
-        self.assertEqual(projection(500,60,28,'same'),projection(500,60,28,'same'))
-        self.assertEqual(projection(2300,60,0,'done'),(2300,2300,0))
-        self.assertEqual(projection(500,None,28,'none'),(None,None,None))
-        self.assertEqual(values[0][0],round(500+60*28*(1+values[0][2]/100)))
+    def test_projection_chips_bounds_and_final_season(self):
+        chips=[{'name':name,'start_event':max(2,start) if name in ['wildcard','freehit'] else start,'stop_event':stop} for start,stop in [(1,19),(20,38)] for name in ['wildcard','freehit','bboost','3xc']]
+        m=manager(1,[score(1,90,total=90),score(2,90,total=180)])
+        m['chips']=[{'name':'3xc','gw':2}]
+        result=forecast(m,38,2,chips)
+        self.assertEqual(result,forecast(m,38,2,chips))
+        self.assertTrue(180<result['projected_total']<=2430)
+        self.assertEqual(len(result['chips_remaining']),7)
+        self.assertEqual(len(remaining_chips(m['chips'],chips,19)),4)
+        self.assertEqual(forecast(m,38,18,chips)['projection_chip_bonus'],48) # one slot before expiry + second set
+        m['history']=[score(38,90,total=2600)]
+        self.assertEqual(forecast(m,38,38,chips)['projected_total'],2600)
+        self.assertIsNone(forecast(manager(2,[]),38,2,chips)['projected_total'])
+    def test_prizes_only_complete_months_and_ties(self):
+        config={'season_prizes':[20000,12000,8000],'monthly_prize':1500,'monthly_count':10,'buy_in':5000,'total_pool':55000}
+        es=[{'deadline_time':date,'finished':done,'data_checked':done} for date,done in [('2026-08-15T12:00:00Z',True),('2026-09-15T12:00:00Z',True),('2026-10-15T12:00:00Z',False)]]
+        months=[{'id':'2026-'+month,'label':month,'rows':[{'id':1,'rank':1}]} for month in ['08','09','10']]
+        award_months(months,es)
+        ms=[manager(1,[]),manager(2,[]),manager(3,[])]
+        prizes=prize_tracker(ms,months,es,config)
+        self.assertEqual(prizes['rows'][0]['earned'],3000)
+        self.assertEqual(prizes['rows'][0]['net'],-2000)
+        self.assertEqual(prizes['rows'][0]['if_ended_net'],18000)
+        self.assertEqual(prizes['allocated'],3000)
+        months[0]['rows'].append({'id':2,'rank':1});ms[1]['rank']=1
+        prizes=prize_tracker(ms,months,es,config)
+        self.assertEqual(prizes['rows'][0]['monthly_earned'],2250)
+        self.assertEqual(prizes['rows'][1]['monthly_earned'],750)
+        self.assertEqual(sum(r['season_prize'] for r in prizes['rows']),40000)
+        self.assertEqual(prizes['rows'][0]['season_prize'],16000)
+    def test_matchday_gate(self):
+        now=datetime(2026,9,26,12,tzinfo=timezone.utc)
+        snapshot={'updated_at':'2026-09-26T11:00:00Z','fixture_kickoffs':['2026-09-27T12:00:00Z']}
+        self.assertFalse(refresh_due(snapshot,now))
+        snapshot['fixture_kickoffs']=['2026-09-26T12:30:00Z']
+        self.assertTrue(refresh_due(snapshot,now))
+        snapshot['fixture_kickoffs']=['2026-09-27T12:00:00Z'];snapshot['updated_at']='2026-09-26T05:00:00Z'
+        self.assertTrue(refresh_due(snapshot,now))
+    def test_team_view_autosub_and_benchboost(self):
+        players={i:{'id':i,'web_name':str(i),'team':1,'code':i,'element_type':3} for i in [1,2]}
+        detail={'lineup':[{'element':1,'position':5,'multiplier':0},{'element':2,'position':13,'multiplier':1}], 'automatic_subs':[{'element_in':2,'element_out':1}]}
+        result=team_view(detail,players,{1:'ABC'},{1:0,2:12},5,True)
+        self.assertEqual([(p['id'],p['slot'],p['earned']) for p in result['players']],[(2,5,12),(1,13,0)])
+        detail['automatic_subs']=[];detail['lineup'][0]['multiplier']=1
+        self.assertEqual(team_view(detail,players,{1:'ABC'},{1:2,2:12},5,True)['players'][1]['earned'],12)
     def test_best_gameweek_rank_is_global_and_lower_is_better(self):
         a=score(1,50);a['overall_gw_rank']=10000
         b=score(2,60);b['overall_gw_rank']=10000

@@ -2,7 +2,7 @@ name: Update FPL and publish site
 
 on:
   schedule:
-    - cron: '17 */6 * * *'
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -19,8 +19,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  schedule-check:
     if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.due.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: due
+        env:
+          FORCE_REFRESH: ${{ github.event_name != 'schedule' }}
+        run: python3 scripts/refresh_due.py
+  publish:
+    needs: schedule-check
+    if: github.event.repository.private == false && needs.schedule-check.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -49,6 +61,7 @@ jobs:
       - name: Prepare the static website
         run: |
           mkdir -p .site/data
+          cp -R assets .site/assets
           cp index.html styles.css app.js favicon.svg .site/
           cp data/league.json .site/data/
           touch .site/.nojekyll
