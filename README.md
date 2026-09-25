@@ -1,8 +1,8 @@
 # Wireless — our FPL mini-league
 
-**Website:** [avgcloudwizard.github.io/fpl-league](https://avgcloudwizard.github.io/fpl-league/)
+**Website:** [avgcloudwizard.github.io/wireless](https://avgcloudwizard.github.io/wireless/)
 
-**Manual refresh:** [Open the update workflow](https://github.com/avgcloudwizard/fpl-league/actions/workflows/update-fpl.yml)
+**Manual refresh:** [Open the update workflow](https://github.com/avgcloudwizard/wireless/actions/workflows/update-fpl.yml)
 
 A small, mobile-friendly website for **Rank follows, my brother!**, FPL league **795551**. Friends can open the public website without signing in.
 
