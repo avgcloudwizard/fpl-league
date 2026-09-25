@@ -42,10 +42,15 @@ nav{gap:24px}.chip-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}.ch
 .bar-column i{display:flex;align-items:center;justify-content:center;flex-shrink:0}.bar-column .chart-chip{font-size:10px;font-weight:750;font-style:normal;line-height:1;padding:3px 4px;border-radius:3px;letter-spacing:.25px}
 
 /* Rank-linked portraits remain attached to managers when the table is sorted. */
-.standings .standing-manager{position:relative;isolation:isolate;overflow:hidden}
-.standings .leader-row{--row-portrait:url('./assets/league-leader.png')}
-.standings .seventh-row{--row-portrait:url('./assets/league-seventh.png')}
-.standings .last-row{--row-portrait:url('./assets/league-last.png')}
-.standings .leader-row .standing-manager::before,.standings .seventh-row .standing-manager::before,.standings .last-row .standing-manager::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--row-portrait);background-repeat:no-repeat;background-size:170px auto;background-position:right 38%;opacity:.25;filter:blur(.5px);mask-image:linear-gradient(90deg,transparent 5%,#000 65%,transparent 100%)}
-.standings .leader-row .manager-cell,.standings .seventh-row .manager-cell,.standings .last-row .manager-cell{position:relative;text-shadow:0 1px 4px #101714}
-@media(max-width:600px){.standings .leader-row .standing-manager::before,.standings .seventh-row .standing-manager::before,.standings .last-row .standing-manager::before{background-size:145px auto;background-position:right 35%;opacity:.28}}
+.rank-portraits .standing-manager{position:relative;isolation:isolate;overflow:hidden}
+.rank-portraits .leader-row{--row-portrait:url('./assets/league-leader.png')}
+.rank-portraits .seventh-row{--row-portrait:url('./assets/league-seventh.png')}
+.rank-portraits .last-row{--row-portrait:url('./assets/league-last.png')}
+.rank-portraits .leader-row .standing-manager::before,.rank-portraits .seventh-row .standing-manager::before,.rank-portraits .last-row .standing-manager::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--row-portrait);background-repeat:no-repeat;background-size:170px auto;background-position:right 38%;opacity:.25;filter:blur(.5px);mask-image:linear-gradient(90deg,transparent 5%,#000 65%,transparent 100%)}
+.rank-portraits .leader-row .manager-cell,.rank-portraits .seventh-row .manager-cell,.rank-portraits .last-row .manager-cell{position:relative;text-shadow:0 1px 4px #101714}
+@media(max-width:600px){.rank-portraits .leader-row .standing-manager::before,.rank-portraits .seventh-row .standing-manager::before,.rank-portraits .last-row .standing-manager::before{background-size:145px auto;background-position:right 35%;opacity:.28}}
+
+.header-credit{margin-left:auto;color:var(--muted);font-size:13px;font-style:italic;white-space:nowrap;letter-spacing:.2px}.header-credit span{color:var(--green)}
+@media(min-width:601px) and (max-width:1100px){.header-inner>.brand{order:1}.header-credit{order:2}.header-inner>nav{order:3;flex-basis:100%}}
+@media(max-width:600px){.header-credit{font-size:12px}}
+.wide-table .standing-manager{min-width:200px}
