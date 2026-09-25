@@ -38,3 +38,5 @@ nav{gap:24px}.chip-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}.ch
 @media(min-width:900px){.home-hero::before,.money-hero::before{background-position:center 38%}.home-hero h1{max-width:640px}}
 @media(max-width:600px){.home-hero::before,.money-hero::before{background-size:cover;background-position:53% center;opacity:.66}.home-hero::after,.money-hero::after{background:linear-gradient(90deg,#101c16b8,#101c166b)}.home-hero,.money-hero{min-height:235px}}
 @media(min-width:900px){.home-hero::before,.money-hero::before{left:42%;background-position:center 8%;mask-image:linear-gradient(90deg,transparent,#000 24%)}.home-hero::after,.money-hero::after{background:linear-gradient(90deg,#101c16d9 0%,#101c1680 52%,#101c162b 100%)}}
+
+.bar-column i{display:flex;align-items:center;justify-content:center;flex-shrink:0}.bar-column .chart-chip{font-size:10px;font-weight:750;font-style:normal;line-height:1;padding:3px 4px;border-radius:3px;letter-spacing:.25px}
