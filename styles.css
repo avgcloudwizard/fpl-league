@@ -40,3 +40,11 @@ nav{gap:24px}.chip-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}.ch
 @media(min-width:900px){.home-hero::before,.money-hero::before{left:42%;background-position:center 8%;mask-image:linear-gradient(90deg,transparent,#000 24%)}.home-hero::after,.money-hero::after{background:linear-gradient(90deg,#101c16d9 0%,#101c1680 52%,#101c162b 100%)}}
 
 .bar-column i{display:flex;align-items:center;justify-content:center;flex-shrink:0}.bar-column .chart-chip{font-size:10px;font-weight:750;font-style:normal;line-height:1;padding:3px 4px;border-radius:3px;letter-spacing:.25px}
+
+/* Rank-linked portraits remain attached to managers when the table is sorted. */
+.standings .standing-manager{position:relative;isolation:isolate;overflow:hidden}
+.standings .leader-row{--row-portrait:url('./assets/league-leader.png')}
+.standings .last-row{--row-portrait:url('./assets/league-last.png')}
+.standings .leader-row .standing-manager::before,.standings .last-row .standing-manager::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:var(--row-portrait);background-repeat:no-repeat;background-size:170px auto;background-position:right 38%;opacity:.25;filter:blur(.5px);mask-image:linear-gradient(90deg,transparent 5%,#000 65%,transparent 100%)}
+.standings .leader-row .manager-cell,.standings .last-row .manager-cell{position:relative;text-shadow:0 1px 4px #101714}
+@media(max-width:600px){.standings .leader-row .standing-manager::before,.standings .last-row .standing-manager::before{background-size:145px auto;background-position:right 35%;opacity:.28}}
