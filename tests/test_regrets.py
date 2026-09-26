@@ -69,3 +69,16 @@ class RegretComparisonTests(unittest.TestCase):
         m['history'][0]['chip']='wildcard'
         row=build_regrets([m],details,elements,{1},{},fetch)['rows'][0]
         self.assertEqual(row['receipts'],[])
+
+class PermaCaptainTests(unittest.TestCase):
+    def test_fixed_choices_unowned_player_and_triple_bonus(self):
+        from scripts.regrets import perma_captains
+        elements={1:{'web_name':'Haaland'},2:{'web_name':'B.Fernandes'},3:{'web_name':'Palmer','first_name':'Cole'},4:{'web_name':'Saka'},5:{'web_name':'João Pedro'},6:{'web_name':'Palmer','first_name':'Other'}}
+        history=[{'gw':1,'chip':None},{'gw':2,'chip':'3xc'}]
+        details={1:{'lineup':[{'element':1,'multiplier':2}]},2:{'lineup':[{'element':1,'multiplier':3}]}}
+        live={gw:{pid:{'total_points':pid} for pid in elements} for gw in [1,2]}
+        result=perma_captains(history,details,live,elements)
+        self.assertEqual([r['id'] for r in result],[1,2,3,4,5])
+        self.assertEqual(result[0]['delta'],0)
+        self.assertEqual(result[2]['delta'],6) # (3-1) + (3-1)*2, even while not owned
+        self.assertEqual(result[4]['delta'],12)

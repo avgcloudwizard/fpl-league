@@ -137,8 +137,10 @@ Monthly Fraud of the Month uses the lowest net monthly points, sharing ties. In 
 
 ### The what-if pages
 
-- **Enemies** compares the selected manager's public scoring multipliers with the other ten teams. It shows collective rival exposure per player point, not a forecast. Before the next deadline, it still shows the last public squads.
+- **Enemies** lets you search a player and shows which managers own or do not own him, including bench ownership. Missing squads are excluded from both lists. Before the next deadline it still uses the last public squads.
 - **UnTouched** freezes the original GW1 starting XI, bench order, captain and vice. It applies automatic substitutions and legal formations each completed GW, with no chips, hits or manual changes. Actual points cover the same completed weeks. Missing GW1 teams are left blank.
-- **MaccaPanti** lets you choose a team. Captain Hindsight switches the armband to your selected player only in GWs when they were in the scoring lineup (other weeks stay unchanged). Transfer Receipts compare incoming/outgoing base points over the transfer GW and next two GWs, deducting each transfer week's hit once. Wildcard/Free Hit weeks are excluded. Bench Regret shows unused bench players after autosubs, excluding Bench Boost.
+- **MaccaPanti** lets you choose a team. Captain Hindsight compares the captain bonus across every completed GW for Haaland, Bruno Fernandes, Cole Palmer, Saka or João Pedro, regardless of ownership. The normal/Triple Captain bonus applies; there is no vice fallback and other points stay unchanged. This is a bonus-only hypothetical, not a legal team reconstruction. Transfer Receipts compare incoming/outgoing base points over the transfer GW and next two GWs, deducting each transfer week's hit once. Wildcard/Free Hit weeks are excluded. Bench Regret shows unused bench players after autosubs, excluding Bench Boost.
 
 These pages use only public FPL data. Historical player scores are cached, with the most recent completed week refreshed each run and older scores revisited weekly. A failed regret refresh keeps its previous snapshot and shows a delay notice. New transfers and squads remain private until FPL publishes them after the deadline.
+
+UnTouched rank compares one manager’s frozen score with everybody else’s actual completed-GW score, sharing ranks for equal points. The separate frozen table position ranks all frozen teams against each other.

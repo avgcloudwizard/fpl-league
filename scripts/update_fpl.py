@@ -123,7 +123,7 @@ def price_watch(bootstrap):
         else:
             status = labels.get(likelihood, 'Unlikely to change')
             direction = 1 if likelihood in (4, 5) else -1 if likelihood in (-4, -5) else 0
-        result.append({**player_info(p, teams), 'price': p['now_cost'] / 10,
+        result.append({**player_info(p, teams), 'full_name': (p.get('first_name', '') + ' ' + p.get('second_name', '')).strip(), 'price': p['now_cost'] / 10,
                        'ownership': float(p['selected_by_percent']),
                        'gw_change': p['cost_change_event'] / 10,
                        'progress': float(p['price_change_percent']) if p.get('price_change_percent') is not None else None,

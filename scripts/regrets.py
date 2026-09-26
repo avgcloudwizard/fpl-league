@@ -50,6 +50,26 @@ def untouched_score(lineup, stats, roles):
     return points
 
 
+def perma_captains(history, details, live, elements):
+    choices = [('Haaland', 'Haaland'), ('B.Fernandes', 'Bruno Fernandes'),
+               ('Palmer', 'Palmer'), ('Saka', 'Saka'), ('João Pedro', 'João Pedro')]
+    rows = []
+    for web_name, label in choices:
+        player = next((pid for pid, e in elements.items() if e['web_name'] == web_name
+                       and (web_name != 'Palmer' or e.get('first_name') == 'Cole')), None)
+        if player is None:
+            continue
+        delta = 0
+        for r in history:
+            gw = r['gw']
+            captain = next((p for p in details[gw]['lineup'] if (p.get('multiplier') or 0) > 1), None)
+            actual_bonus = live[gw][captain['element']]['total_points'] * (captain['multiplier'] - 1) if captain else 0
+            hypothetical_bonus = live[gw][player]['total_points'] * (2 if r['chip'] == '3xc' else 1)
+            delta += hypothetical_bonus - actual_bonus
+        rows.append({'id': player, 'name': label, 'delta': delta})
+    return rows
+
+
 def build_regrets(managers, details, elements, completed, cache, fetch):
     live_cache = cache.setdefault('regret_live', {})
     latest = max(completed, default=0)
@@ -109,6 +129,7 @@ def build_regrets(managers, details, elements, completed, cache, fetch):
                 moves.append({'in': names.get(bought, str(bought)), 'out': names.get(sold, str(sold)), 'bought': incoming, 'sold': outgoing, 'delta': incoming - outgoing})
             receipts.append({'gw': gw, 'weeks': window, 'moves': moves, 'hits': h['hits'], 'delta': sum(t['delta'] for t in moves) - h['hits']})
         result.append({'id': m['id'], 'actual': actual, 'frozen': frozen,
+                       'perma_captains': perma_captains(history, ds, live, elements),
                        'captains': sorted(candidates.values(), key=lambda c: (-c['delta'], c['name'])),
                        'bench': sorted(bench, key=lambda r: -r['gw']), 'receipts': receipts})
     return {'rows': result, 'through_gw': latest, 'stale': False}
