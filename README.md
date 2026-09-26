@@ -143,4 +143,4 @@ Monthly Fraud of the Month uses the lowest net monthly points, sharing ties. In 
 
 These pages use only public FPL data. Historical player scores are cached, with the most recent completed week refreshed each run and older scores revisited weekly. A failed regret refresh keeps its previous snapshot and shows a delay notice. New transfers and squads remain private until FPL publishes them after the deadline.
 
-UnTouched rank compares one manager’s frozen score with everybody else’s actual completed-GW score, sharing ranks for equal points. The separate frozen table position ranks all frozen teams against each other.
+Frozen table position ranks all frozen teams against each other.
