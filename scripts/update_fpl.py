@@ -9,8 +9,10 @@ import urllib.request
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 try:
+    from .regrets import build_regrets
     from .season_model import forecast, calibrate_projections, award_months, prize_tracker
 except ImportError:
+    from regrets import build_regrets
     from season_model import forecast, calibrate_projections, award_months, prize_tracker
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -376,7 +378,7 @@ def main():
                 continue
             key = f'{entry}:{gw}'
             detail = details.get(key, {})
-            if 'player_base_points' not in detail or 'captain_base_points' not in detail or 'player_points' not in detail or 'squad' not in detail or gw == latest or time.time() - detail.get('fetched_at', 0) > 7 * 86400:
+            if len(detail.get('lineup', [])) != 15 or 'player_base_points' not in detail or 'captain_base_points' not in detail or 'player_points' not in detail or 'squad' not in detail or gw == latest or time.time() - detail.get('fetched_at', 0) > 7 * 86400:
                 try:
                     if gw not in live_cache:
                         live_data = fetch(f'event/{gw}/live/')
@@ -437,6 +439,14 @@ def main():
                          'value': (latest_history['value'] - latest_history['bank']) / 10 if latest_history.get('value') is not None and latest_history.get('bank') is not None else None,
                          'bank': latest_history['bank'] / 10 if latest_history.get('bank') is not None else None,
                          'history': rows})
+    try:
+        regrets = build_regrets(managers, details, elements, completed_ids, cache, fetch)
+        regrets['updated_at'] = datetime.now(timezone.utc).isoformat()
+        cache['regrets'] = regrets
+    except Exception as exc:
+        print(f'Regret stats delayed: {type(exc).__name__}: {exc}', file=sys.stderr)
+        regrets = {**cache.get('regrets', {}), 'stale': True}
+        warnings.append('Regret statistics could not be refreshed; previous results retained where available.')
     gameweeks, monthly = build_stats(managers, events, len(bootstrap['events']), start, bootstrap.get('chips', []), latest)
     award_months(monthly, bootstrap['events'])
     prizes = prize_tracker(managers, monthly, bootstrap['events'], config['prizes'])
@@ -471,7 +481,7 @@ def main():
             'total_gameweeks': len(bootstrap['events']),
             'current_gw': active['id'] if active else None,
             'in_progress': bool(active and active['id'] not in completed_ids),
-            'prices': price_watch(bootstrap), 'refresh_minutes_matchday': config.get('matchday_minutes', 15),
+            'regrets': regrets, 'prices': price_watch(bootstrap), 'refresh_minutes_matchday': config.get('matchday_minutes', 15),
             'fixture_kickoffs': fixture_kickoffs, 'prizes': prizes, 'creators': creators,
             'warnings': warnings, 'managers': managers, 'gameweeks': gameweeks, 'months': monthly}
     write_json(ROOT / 'data/league.json', data)

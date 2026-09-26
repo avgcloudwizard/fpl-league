@@ -134,3 +134,11 @@ Creator team sheets use the latest public GW picks from FPL. Completed squads ar
 Home ownership awards use the overall FPL selection percentage in the current snapshot, not captain-adjusted effective ownership (EO). Eno amongst us counts players strictly below 5% ownership in each latest public 15-player squad, excluding goalkeepers priced £4.0m or less. Bakar amongst us adds ownership percentages across all 15 players, including the bench and every goalkeeper; the sum can exceed 100%. Ties share each award. Active Free Hit squads count as the current public team. Private transfers are unavailable. Both awards are withheld if any manager's squad or ownership coverage is missing or marked stale.
 
 Monthly Fraud of the Month uses the lowest net monthly points, sharing ties. In an unfinished month it reflects only the completed Gameweeks listed. Price-watch Trend is the existing projected threshold progress, moved before Price; it is not a probability.
+
+### The what-if pages
+
+- **Enemies** compares the selected manager's public scoring multipliers with the other ten teams. It shows collective rival exposure per player point, not a forecast. Before the next deadline, it still shows the last public squads.
+- **UnTouched** freezes the original GW1 starting XI, bench order, captain and vice. It applies automatic substitutions and legal formations each completed GW, with no chips, hits or manual changes. Actual points cover the same completed weeks. Missing GW1 teams are left blank.
+- **MaccaPanti** lets you choose a team. Captain Hindsight switches the armband to your selected player only in GWs when they were in the scoring lineup (other weeks stay unchanged). Transfer Receipts compare incoming/outgoing base points over the transfer GW and next two GWs, deducting each transfer week's hit once. Wildcard/Free Hit weeks are excluded. Bench Regret shows unused bench players after autosubs, excluding Bench Boost.
+
+These pages use only public FPL data. Historical player scores are cached, with the most recent completed week refreshed each run and older scores revisited weekly. A failed regret refresh keeps its previous snapshot and shows a delay notice. New transfers and squads remain private until FPL publishes them after the deadline.
