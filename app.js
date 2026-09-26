@@ -248,7 +248,7 @@ function enemyOwnership(){
  return `<div class="section-title section"><h2>${esc(player.full_name||player.name)} <span class="subtext">· ${esc(player.team)}</span></h2><span class="subtext">GW ${gw}</span></div><div class="ownership-grid">${group('Owned by',owners)}${group('Not owned by',others)}</div><p class="source-note">Includes all 15 players, including the bench, in each manager’s latest public squad. Transfers since the deadline are private.${ready.length<data.managers.length?' '+(data.managers.length-ready.length)+' unavailable squads are excluded from both lists.':''}</p>`;
 }
 function enemies(){
- return heading('Enemies','One player. Who has him—and who doesn’t?')+`<label class="search-field enemy-search"><input id="enemy-search" type="search" aria-label="Search a player" placeholder="Search a player…" value="${esc(enemyQuery)}" autocomplete="off"></label><div id="enemy-matches">${enemyMatches()}</div><div id="enemy-ownership">${enemyOwnership()}</div>`;
+ return heading('Who Owns','One player. Who has him—and who doesn’t?')+`<label class="search-field enemy-search"><input id="enemy-search" type="search" aria-label="Search a player" placeholder="Search a player…" value="${esc(enemyQuery)}" autocomplete="off"></label><div id="enemy-matches">${enemyMatches()}</div><div id="enemy-ownership">${enemyOwnership()}</div>`;
 }
 
 function render(){if(!data)return;const route=location.hash.slice(1)||'home';const pages={home,season,gameweeks,monthly,predictions,prices,creators,enemies,untouched,maccapanti,money};const active=pages[route]?route:'home';document.querySelectorAll('[data-nav]').forEach(a=>{a.classList.toggle('active',a.dataset.nav===active);if(a.dataset.nav===active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -256,7 +256,7 @@ function render(){if(!data)return;const route=location.hash.slice(1)||'home';con
  if(Date.now()-new Date(data.updated_at).getTime()>18*3600000)notice+='<div class="notice">The latest refresh is delayed. Showing the last successful snapshot.</div>';
  if(data.warnings.length)notice+='<div class="notice">Some data could not be refreshed. Previous values are retained where possible; missing values are unavailable. Check the snapshot time shown in each section.</div>';
  $('#content').innerHTML=`<div class="fade">${notice}${pages[active]()}</div>`;
- document.title=`${active==='home'?data.name:active==='creators'?'Content Creators':active==='money'?'Money follows':active==='untouched'?'UnTouched':active==='maccapanti'?'MaccaPanti':active[0].toUpperCase()+active.slice(1)} · Wireless`;
+ document.title=`${active==='home'?data.name:active==='creators'?'Content Creators':active==='enemies'?'Who Owns':active==='money'?'Money follows':active==='untouched'?'UnTouched':active==='maccapanti'?'MaccaPanti':active[0].toUpperCase()+active.slice(1)} · Wireless`;
 }
 // Sort displayed statistics in place; missing values stay last in both directions.
 function sortValue(td) {
