@@ -433,7 +433,8 @@ def main():
                          'public_team': public_team,
                          **scoring_awards(rows, details, entry),
                          **comparison_history(history['current'], chips),
-                         'value': latest_history.get('value', 0) / 10 or None,
+                         # FPL history value includes the bank; expose squad-only value here.
+                         'value': (latest_history['value'] - latest_history['bank']) / 10 if latest_history.get('value') is not None and latest_history.get('bank') is not None else None,
                          'bank': latest_history['bank'] / 10 if latest_history.get('bank') is not None else None,
                          'history': rows})
     gameweeks, monthly = build_stats(managers, events, len(bootstrap['events']), start, bootstrap.get('chips', []), latest)

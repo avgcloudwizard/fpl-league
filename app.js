@@ -39,9 +39,15 @@ function projectionTable(compact=false) {
  cell(`<div class="projection-bar"><span>${num(m.projected_total)}</span><div class="power-track"><i style="width:${Math.max(0,m.projected_total)/max*100}%"></i></div></div>`),cell(movement(m.rank-m.projected_position),'',m.rank-m.projected_position)])));
 }
 function wealthAward(ms) {
- const eligible=ms.filter(m=>m.value!=null&&m.bank!=null).map(m=>({...m,wealth:Math.round((m.value+m.bank)*10)/10}));
+ const prices=new Map((data.prices?.players||[]).map(p=>[p.id,p.price]));
+ const eligible=ms.map(m=>{
+  const squad=m.public_team?.players;
+  if(m.bank==null||!squad||squad.length!==15||m.public_team.stale||squad.some(p=>!Number.isFinite(prices.get(p.id))))return null;
+  return {...m,wealth:Math.round((squad.reduce((sum,p)=>sum+prices.get(p.id),0)+m.bank)*10)/10};
+ });
+ if(eligible.some(m=>!m))return '';
  const winners=best(eligible,'wealth');
- return award('💵 Ambani amongst us',winners,'£'+num(winners[0]?.wealth,1)+'m','Squad value + money in the bank at the latest public deadline');
+ return award('💵 Ambani amongst us',winners,'£'+num(winners[0]?.wealth,1)+'m','Current prices of the last public squad + bank at its deadline. Transfers since that deadline are private.');
 }
 function ownershipAwards(ms){
  const players=new Map((data.prices?.players||[]).map(p=>[p.id,p]));
