@@ -41,18 +41,20 @@ nav{gap:24px}.chip-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}.ch
 
 .bar-column i{display:flex;align-items:center;justify-content:center;flex-shrink:0}.bar-column .chart-chip{font-size:10px;font-weight:750;font-style:normal;line-height:1;padding:3px 4px;border-radius:3px;letter-spacing:.25px}
 
-/* Feathered portraits sit behind the rank/avatar area, clear of manager names. */
+/* Rectangular rank portraits, fading into the row along their right edge. */
 .rank-portraits .leader-row{--row-portrait:url('./assets/league-leader.png')}
 .rank-portraits .seventh-row{--row-portrait:url('./assets/league-seventh.png')}
 .rank-portraits .last-row{--row-portrait:url('./assets/league-last.png')}
 .rank-portraits tbody td:first-child{position:relative;isolation:isolate}
-.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{content:"";position:absolute;left:0;top:0;bottom:0;width:120px;z-index:-1;pointer-events:none;background-image:var(--row-portrait);background-size:cover;background-position:center 38%;opacity:.38;filter:blur(.7px);mask-image:radial-gradient(ellipse closest-side at 50% 50%,#000 25%,#000000b3 48%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse closest-side at 50% 50%,#000 25%,#000000b3 48%,transparent 100%)}
+.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{content:"";position:absolute;left:0;top:0;bottom:0;width:130px;z-index:-1;pointer-events:none;background-image:var(--row-portrait);background-size:cover;background-position:center 35%;opacity:.5;mask-image:linear-gradient(to right,#000 0%,#000 40%,transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0%,#000 40%,transparent 100%)}
 .rank-portraits .rank-badge{position:relative;background-color:#18211cb8}
 .rank-portraits .manager-cell{position:relative}
-.wide-table.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{width:80px}
-@media(max-width:1100px){.standings.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{width:65px}}
-@media(max-width:600px){.standings.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{width:52px}.wide-table.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{width:65px}}
-
+@media(max-width:600px){.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{width:115px}}
+.spotlight{background:#a5b980}
+.stat-unit{font-size:12px;letter-spacing:0;color:var(--muted);font-weight:500}
+.power-info{border:0;background:none;padding:4px 6px;cursor:pointer;font:inherit;color:var(--muted)}
+.power-info:hover{color:var(--green)}
+.power-explanation{margin-top:18px}
 .header-credit{margin-left:auto;color:var(--muted);font-size:13px;font-style:italic;white-space:nowrap;letter-spacing:.2px}.header-credit span{color:var(--green)}
 @media(min-width:601px) and (max-width:1100px){.header-inner>.brand{order:1}.header-credit{order:2}.header-inner>nav{order:3;flex-basis:100%}}
 @media(max-width:600px){.header-credit{font-size:12px}}
