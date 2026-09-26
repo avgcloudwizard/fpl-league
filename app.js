@@ -38,6 +38,11 @@ function projectionTable(compact=false) {
  cell(medal(m.projected_position),'rank-cell'),cell(person(m)),...(!compact?[cell(num(m.total),'numeric')]:[]),cell('#'+m.rank,'numeric'),
  cell(`<div class="projection-bar"><span>${num(m.projected_total)}</span><div class="power-track"><i style="width:${Math.max(0,m.projected_total)/max*100}%"></i></div></div>`),cell(movement(m.rank-m.projected_position),'',m.rank-m.projected_position)])));
 }
+function wealthAward(ms) {
+ const eligible=ms.filter(m=>m.value!=null&&m.bank!=null).map(m=>({...m,wealth:Math.round((m.value+m.bank)*10)/10}));
+ const winners=best(eligible,'wealth');
+ return award('💵 Ambani amongst us',winners,'£'+num(winners[0]?.wealth,1)+'m','Squad value + money in the bank at the latest public deadline');
+}
 function ownershipAwards(ms){
  const players=new Map((data.prices?.players||[]).map(p=>[p.id,p]));
  const rows=ms.map(m=>{
@@ -66,7 +71,7 @@ function home() {
  ${award('🪑 Most bench points',best(ms,'bench'),num(best(ms,'bench')[0]?.bench)+' pts','Completed Gameweeks')}
  ${award('🫙 The Ghee Khatam GW',low,num(low[0]?.worst_gw_rank)+(low.length===1?' '+gwSuffix(low[0].worst_gw_rank_gws):''),'Worst overall FPL Gameweek rank',{gws:low.length>1?'worst_gw_rank_gws':null})}
  ${ownershipAwards(ms)}
- ${award('💵 Ambani amongst us',best(ms.filter(m=>m.value!=null),'value'),'£'+num(best(ms.filter(m=>m.value!=null),'value')[0]?.value,1)+'m','Highest public squad value at the latest deadline · excludes money in the bank')}
+ ${wealthAward(ms)}
  </div></section><section class="section panel"><div class="panel-heading"><h2>Projected final standings</h2><a class="text-link" href="#predictions">The full picture ↗</a></div>${projectionTable(true)}<p class="table-note">Illustrative season projection using recent form, season form and chips remaining — not a guarantee.</p></section>`;
 }
 function gameweeks() {
