@@ -61,3 +61,11 @@ nav{gap:24px}.chip-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}.ch
 .wide-table .standing-manager{min-width:200px}
 
 .price-table .trend-cell{min-width:86px}.price-table .trend-cell .price-track{width:64px}
+
+/* Keep the portrait above the adjacent sticky cell's fill, with names above it. */
+@media(max-width:600px){
+ .standings.rank-portraits tbody td:first-child{position:sticky;z-index:3}
+ .standings.rank-portraits tbody td:nth-child(2){z-index:auto}
+ .standings.rank-portraits .manager-cell{z-index:4}
+ .standings.rank-portraits :is(.leader-row,.seventh-row,.last-row) td:first-child::before{width:165px}
+}
